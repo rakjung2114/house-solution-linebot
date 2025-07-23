@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug LINE Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold text-center mb-6 text-red-600">
+            <i class="fas fa-bug mr-2"></i>Debug LINE Bot System
+        </h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- System Status -->
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-blue-700 mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>System Status
+                </h3>
+                <div class="space-y-2">
+                    <button onclick="checkSystemStatus()" 
+                            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                        <i class="fas fa-check-circle mr-1"></i>Check System Status
+                    </button>
+                    <div id="systemResult" class="mt-2 p-2 rounded hidden"></div>
+                </div>
+            </div>
+
+            <!-- Test Functions -->
+            <div class="bg-green-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-green-700 mb-4">
+                    <i class="fas fa-flask mr-2"></i>Test Functions
+                </h3>
+                <div class="space-y-2">
+                    <button onclick="testBotSystem()" 
+                            class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+                        <i class="fas fa-robot mr-1"></i>Test Bot System
+                    </button>
+                    <div id="botTestResult" class="mt-2 p-2 rounded hidden"></div>
+                </div>
+            </div>
+
+            <!-- Channel Token Test -->
+            <div class="bg-purple-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-purple-700 mb-4">
+                    <i class="fas fa-key mr-2"></i>Channel Token Test
+                </h3>
+                <div class="space-y-2">
+                    <button onclick="testChannelToken()" 
+                            class="w-full bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition">
+                        <i class="fas fa-unlock mr-1"></i>Test Channel Token
+                    </button>
+                    <div id="tokenResult" class="mt-2 p-2 rounded hidden"></div>
+                </div>
+            </div>
+
+            <!-- Spreadsheet Test -->
+            <div class="bg-orange-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-orange-700 mb-4">
+                    <i class="fas fa-table mr-2"></i>Spreadsheet Connection
+                </h3>
+                <div class="space-y-2">
+                    <button onclick="testSpreadsheet()" 
+                            class="w-full bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
+                        <i class="fas fa-database mr-1"></i>Test Spreadsheet
+                    </button>
+                    <div id="sheetResult" class="mt-2 p-2 rounded hidden"></div>
+                </div>
+            </div>
+
+            <!-- Simulate Webhook -->
+            <div class="bg-yellow-50 p-4 rounded-lg col-span-1 md:col-span-2">
+                <h3 class="font-semibold text-yellow-700 mb-4">
+                    <i class="fas fa-paper-plane mr-2"></i>Simulate LINE Webhook
+                </h3>
+                <div class="space-y-2">
+                    <input type="text" id="testMessage" placeholder="ใส่ข้อความทดสอบ (เช่น เมนู, ลงทะเบียน)" 
+                           class="w-full p-2 border rounded">
+                    <button onclick="simulateMessage()" 
+                            class="w-full bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
+                        <i class="fas fa-play mr-1"></i>Simulate Message
+                    </button>
+                    <div id="simulateResult" class="mt-2 p-2 rounded hidden"></div>
+                </div>
+            </div>
+
+            <!-- Console Logs -->
+            <div class="bg-gray-50 p-4 rounded-lg col-span-1 md:col-span-2">
+                <h3 class="font-semibold text-gray-700 mb-4">
+                    <i class="fas fa-terminal mr-2"></i>Console Logs
+                </h3>
+                <div id="logs" class="bg-black text-green-400 p-3 rounded font-mono text-sm h-64 overflow-y-auto">
+                    Ready for testing...<br>
+                </div>
+                <button onclick="clearLogs()" 
+                        class="mt-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
+                    <i class="fas fa-trash mr-1"></i>Clear Logs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ตั้งค่า URL ของ Web App (ต้องแก้ไขให้ตรงกับ URL จริง)
+        const WEBAPP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+        
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = 'Logs cleared...<br>';
+        }
+
+        function showResult(elementId, success, message, data = null) {
+            const div = document.getElementById(elementId);
+            div.className = `mt-2 p-2 rounded ${success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            div.style.display = 'block';
+            div.innerHTML = `
+                <i class="fas ${success ? 'fa-check-circle' : 'fa-times-circle'} mr-2"></i>${message}
+                ${data ? `<br><small class="text-xs">${JSON.stringify(data, null, 2)}</small>` : ''}
+            `;
+        }
+
+        async function checkSystemStatus() {
+            log('Checking system status...');
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=getWebAppInfo');
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('systemResult', true, 'System is running', result.data);
+                    log('✅ System status: OK');
+                } else {
+                    showResult('systemResult', false, 'System error', result);
+                    log('❌ System status: ERROR');
+                }
+            } catch (error) {
+                showResult('systemResult', false, `Error: ${error.message}`);
+                log(`❌ System check failed: ${error.message}`);
+            }
+        }
+
+        async function testBotSystem() {
+            log('Testing bot system...');
+            try {
+                // ใช้ function ใน LINEBot.gs ที่มีอยู่แล้ว
+                const response = await fetch(WEBAPP_URL + '?action=testBotSystem');
+                const result = await response.json();
+                
+                showResult('botTestResult', result.success, result.message || 'Bot test completed', result.data);
+                log('✅ Bot system tested');
+            } catch (error) {
+                showResult('botTestResult', false, `Error: ${error.message}`);
+                log(`❌ Bot test failed: ${error.message}`);
+            }
+        }
+
+        async function testChannelToken() {
+            log('Testing channel access token...');
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=testLineBotConnection');
+                const result = await response.json();
+                
+                showResult('tokenResult', result.success, result.message, result.data);
+                log(result.success ? '✅ Channel token: VALID' : '❌ Channel token: INVALID');
+            } catch (error) {
+                showResult('tokenResult', false, `Error: ${error.message}`);
+                log(`❌ Token test failed: ${error.message}`);
+            }
+        }
+
+        async function testSpreadsheet() {
+            log('Testing spreadsheet connection...');
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=testUserConnection');
+                const result = await response.json();
+                
+                showResult('sheetResult', result.success, result.message, result.data);
+                log(result.success ? '✅ Spreadsheet: CONNECTED' : '❌ Spreadsheet: FAILED');
+            } catch (error) {
+                showResult('sheetResult', false, `Error: ${error.message}`);
+                log(`❌ Spreadsheet test failed: ${error.message}`);
+            }
+        }
+
+        async function simulateMessage() {
+            const message = document.getElementById('testMessage').value.trim();
+            if (!message) {
+                alert('กรุณาใส่ข้อความทดสอบ');
+                return;
+            }
+
+            log(`Simulating message: "${message}"`);
+            
+            // จำลอง webhook event จาก LINE
+            const webhookEvent = {
+                events: [{
+                    type: 'message',
+                    message: {
+                        type: 'text',
+                        text: message
+                    },
+                    source: {
+                        userId: 'test-user-debug-' + Date.now()
+                    },
+                    replyToken: 'test-reply-token-' + Date.now()
+                }]
+            };
+
+            try {
+                const response = await fetch(WEBAPP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(webhookEvent)
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('simulateResult', true, 'Message simulated successfully', result);
+                    log(`✅ Message simulation: SUCCESS`);
+                } else {
+                    showResult('simulateResult', false, `Simulation failed: ${response.status}`, result);
+                    log(`❌ Message simulation: FAILED (${response.status})`);
+                }
+            } catch (error) {
+                showResult('simulateResult', false, `Error: ${error.message}`);
+                log(`❌ Message simulation failed: ${error.message}`);
+            }
+        }
+
+        // Auto-load system info on page load
+        window.onload = function() {
+            log('Debug page loaded');
+            // checkSystemStatus();
+        };
+    </script>
+</body>
+</html>

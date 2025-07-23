@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทดสอบการลงทะเบียน - The House Solution</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .status-box { padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">🧪 ทดสอบระบบลงทะเบียน</h1>
+            <p class="text-white opacity-90">ตรวจสอบการทำงานของระบบก่อนใช้งานจริง</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-xl p-6">
+            <h2 class="text-2xl font-semibold mb-6">ผลการทดสอบ</h2>
+            
+            <div id="testResults">
+                <div class="info status-box">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    กำลังเตรียมการทดสอบ...
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <button onclick="testEnvironment()" class="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-desktop mr-2"></i>ทดสอบสภาพแวดล้อม
+                </button>
+                
+                <button onclick="testGoogleScriptAPI()" class="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-link mr-2"></i>ทดสอบ Google Script API
+                </button>
+                
+                <button onclick="testDatabaseConnection()" class="bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700">
+                    <i class="fas fa-database mr-2"></i>ทดสอบการเชื่อมต่อฐานข้อมูล
+                </button>
+                
+                <button onclick="testFullRegistration()" class="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-user-plus mr-2"></i>ทดสอบการลงทะเบียน
+                </button>
+            </div>
+
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h3 class="text-lg font-semibold mb-2">ข้อมูลระบบ</h3>
+                <div id="systemInfo" class="text-sm text-gray-600">
+                    <p><strong>URL:</strong> <span id="currentUrl">-</span></p>
+                    <p><strong>Protocol:</strong> <span id="protocol">-</span></p>
+                    <p><strong>Google Script API:</strong> <span id="googleScriptStatus">-</span></p>
+                    <p><strong>เวลาปัจจุบัน:</strong> <span id="currentTime">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // อัพเดทข้อมูลระบบ
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        document.getElementById('googleScriptStatus').textContent = (typeof google !== 'undefined' && google.script) ? '✅ พร้อมใช้งาน' : '❌ ไม่พร้อมใช้งาน';
+        document.getElementById('currentTime').textContent = new Date().toLocaleString('th-TH');
+
+        function addResult(type, message) {
+            const resultsDiv = document.getElementById('testResults');
+            const resultBox = document.createElement('div');
+            resultBox.className = `${type} status-box`;
+            resultBox.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'}-circle mr-2"></i>${message}`;
+            resultsDiv.appendChild(resultBox);
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        function testEnvironment() {
+            clearResults();
+            addResult('info', 'เริ่มทดสอบสภาพแวดล้อม...');
+
+            // ตรวจสอบ Protocol
+            const isHTTPS = window.location.protocol === 'https:';
+            const isFile = window.location.protocol === 'file:';
+            
+            if (isFile) {
+                addResult('error', '❌ Protocol: file:// - ไม่สามารถเชื่อมต่อ Google Apps Script ได้');
+            } else if (isHTTPS) {
+                addResult('success', '✅ Protocol: HTTPS - ปลอดภัย');
+            } else {
+                addResult('warning', '⚠️ Protocol: HTTP - อาจมีข้อจำกัดบางอย่าง');
+            }
+
+            // ตรวจสอบ Google Script API
+            if (typeof google !== 'undefined' && google.script) {
+                addResult('success', '✅ Google Apps Script API พร้อมใช้งาน');
+            } else {
+                addResult('error', '❌ Google Apps Script API ไม่พร้อมใช้งาน - ต้องเปิดผ่าน Web App URL');
+            }
+
+            // ตรวจสอบ Console Errors
+            const errors = [];
+            const originalError = console.error;
+            console.error = function(...args) {
+                errors.push(args.join(' '));
+                originalError.apply(console, args);
+            };
+
+            setTimeout(() => {
+                if (errors.length === 0) {
+                    addResult('success', '✅ ไม่พบ Console Errors');
+                } else {
+                    addResult('warning', `⚠️ พบ Console Errors: ${errors.length} รายการ`);
+                }
+                console.error = originalError;
+            }, 1000);
+        }
+
+        function testGoogleScriptAPI() {
+            clearResults();
+            
+            if (typeof google === 'undefined' || !google.script) {
+                addResult('error', '❌ Google Apps Script API ไม่พร้อมใช้งาน');
+                addResult('info', '💡 วิธีแก้ไข: เปิดหน้านี้ผ่าน Web App URL ที่ได้จาก Google Apps Script');
+                return;
+            }
+
+            addResult('info', 'เริ่มทดสอบการเชื่อมต่อ Google Script...');
+
+            google.script.run
+                .withSuccessHandler(result => {
+                    try {
+                        let data;
+                        if (typeof result === 'string') {
+                            data = JSON.parse(result);
+                        } else {
+                            data = result;
+                        }
+
+                        if (data.success) {
+                            addResult('success', '✅ เชื่อมต่อ Google Script สำเร็จ');
+                            addResult('info', `📊 ข้อมูล: ${JSON.stringify(data, null, 2)}`);
+                        } else {
+                            addResult('error', `❌ Google Script ตอบกลับด้วย error: ${data.error}`);
+                        }
+                    } catch (error) {
+                        addResult('error', `❌ Parse Error: ${error.message}`);
+                        addResult('info', `Raw result: ${result}`);
+                    }
+                })
+                .withFailureHandler(error => {
+                    addResult('error', `❌ Google Script Error: ${error.message || error}`);
+                })
+                .testUserConnection();
+        }
+
+        function testDatabaseConnection() {
+            clearResults();
+            
+            if (typeof google === 'undefined' || !google.script) {
+                addResult('error', '❌ ไม่สามารถทดสอบได้ - Google Apps Script API ไม่พร้อมใช้งาน');
+                return;
+            }
+
+            addResult('info', 'ทดสอบการเชื่อมต่อฐานข้อมูล...');
+
+            google.script.run
+                .withSuccessHandler(result => {
+                    try {
+                        let data;
+                        if (typeof result === 'string') {
+                            data = JSON.parse(result);
+                        } else {
+                            data = result;
+                        }
+
+                        if (data.success) {
+                            addResult('success', '✅ เชื่อมต่อฐานข้อมูลสำเร็จ');
+                            addResult('info', `📈 สมาชิกใช้งาน: ${data.activeCount || 0} คน`);
+                            addResult('info', `👥 สมาชิกทั้งหมด: ${data.count || 0} คน`);
+                        } else {
+                            addResult('error', `❌ เชื่อมต่อฐานข้อมูลไม่สำเร็จ: ${data.error}`);
+                        }
+                    } catch (error) {
+                        addResult('error', `❌ Parse Error: ${error.message}`);
+                    }
+                })
+                .withFailureHandler(error => {
+                    addResult('error', `❌ Database Connection Error: ${error.message || error}`);
+                })
+                .getMemberCount();
+        }
+
+        function testFullRegistration() {
+            clearResults();
+            
+            if (typeof google === 'undefined' || !google.script) {
+                addResult('error', '❌ ไม่สามารถทดสอบได้ - Google Apps Script API ไม่พร้อมใช้งาน');
+                return;
+            }
+
+            addResult('info', 'ทดสอบการลงทะเบียนด้วยข้อมูลจำลอง...');
+
+            const testMemberData = {
+                name: 'ทดสอบ ระบบลงทะเบียน',
+                unit_number: 'TEST-001',
+                phone: '081-234-5678',
+                email: 'test@example.com',
+                address: 'ที่อยู่ทดสอบ',
+                notes: 'ข้อมูลทดสอบระบบ - ' + new Date().toLocaleString('th-TH')
+            };
+
+            google.script.run
+                .withSuccessHandler(result => {
+                    try {
+                        let data;
+                        if (typeof result === 'string') {
+                            data = JSON.parse(result);
+                        } else {
+                            data = result;
+                        }
+
+                        if (data.success) {
+                            addResult('success', '✅ ทดสอบการลงทะเบียนสำเร็จ!');
+                            addResult('info', `🎫 รหัสสมาชิก: ${data.member_id}`);
+                            addResult('warning', '⚠️ นี่เป็นข้อมูลทดสอบ - สามารถลบออกได้');
+                        } else {
+                            addResult('error', `❌ ทดสอบการลงทะเบียนไม่สำเร็จ: ${data.error}`);
+                        }
+                    } catch (error) {
+                        addResult('error', `❌ Parse Error: ${error.message}`);
+                    }
+                })
+                .withFailureHandler(error => {
+                    addResult('error', `❌ Registration Test Error: ${error.message || error}`);
+                })
+                .handleUserRegistration(testMemberData);
+        }
+
+        // เรียกใช้ทดสอบเบื้องต้นเมื่อโหลดหน้า
+        window.onload = function() {
+            testEnvironment();
+        };
+    </script>
+</body>
+</html>

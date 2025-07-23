@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The House Solution - หน้าหลัก</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.6s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .menu-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+        .modal { display: none; }
+        .modal.show { display: flex; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen py-8">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center" style="display: none;">
+        <div class="text-center">
+            <div class="loader mx-auto mb-4"></div>
+            <p class="text-gray-600 mb-2">กำลังบันทึกข้อมูล...</p>
+            <p class="text-xs text-gray-500">กรุณารอสักครู่</p>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" style="display: none;">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full mx-4 text-center">
+            <div class="mb-4">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+                    <i class="fas fa-check text-green-600 text-2xl"></i>
+                </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">ลงทะเบียนสำเร็จ!</h3>
+            <p class="text-gray-600 mb-6">ข้อมูลของคุณได้ถูกบันทึกเรียบร้อยแล้ว</p>
+            <p class="text-sm text-gray-500 mb-4">รหัสสมาชิก: <span id="memberIdDisplay" class="font-mono font-bold text-blue-600"></span></p>
+            <div class="flex justify-center space-x-3">
+                <button onclick="resetForm()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    ลงทะเบียนคนถัดไป
+                </button>
+                <button onclick="printInfo()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                    <i class="fas fa-print mr-2"></i>พิมพ์ข้อมูล
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-8 fade-in">
+            <div class="mb-4">
+                <i class="fas fa-home text-6xl text-white opacity-90"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-white mb-2">The House Solution</h1>
+            <p class="text-lg text-white opacity-90">ระบบบริหารนิติบุคคล</p>
+            <p class="text-sm text-white opacity-75 mt-2">ยินดีต้อนรับสู่ระบบบริหารงานที่อยู่อาศัย</p>
+        </div>
+
+        <!-- Main Menu Cards -->
+        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- ลงทะเบียนสมาชิก -->
+            <div class="menu-card bg-white rounded-lg card-shadow p-6 cursor-pointer fade-in" onclick="openRegistrationModal()">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-user-plus text-4xl text-blue-500"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">ลงทะเบียนสมาชิก</h3>
+                    <p class="text-gray-600 text-sm">เพิ่มสมาชิกใหม่เข้าสู่ระบบ</p>
+                </div>
+            </div>
+
+            <!-- แจ้งปัญหา -->
+            <div class="menu-card bg-white rounded-lg card-shadow p-6 cursor-pointer fade-in" onclick="showComingSoon('แจ้งปัญหา')">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-exclamation-triangle text-4xl text-orange-500"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">แจ้งปัญหา</h3>
+                    <p class="text-gray-600 text-sm">แจ้งปัญหาและการซ่อมบำรุง</p>
+                </div>
+            </div>
+
+            <!-- ข้อมูลสมาชิก -->
+            <div class="menu-card bg-white rounded-lg card-shadow p-6 cursor-pointer fade-in" onclick="showComingSoon('ข้อมูลสมาชิก')">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-users text-4xl text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">ข้อมูลสมาชิก</h3>
+                    <p class="text-gray-600 text-sm">ดูข้อมูลและจัดการสมาชิก</p>
+                </div>
+            </div>
+
+            <!-- การชำระเงิน -->
+            <div class="menu-card bg-white rounded-lg card-shadow p-6 cursor-pointer fade-in" onclick="showComingSoon('การชำระเงิน')">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-credit-card text-4xl text-purple-500"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">การชำระเงิน</h3>
+                    <p class="text-gray-600 text-sm">ตรวจสอบและชำระค่าใช้จ่าย</p>
+                </div>
+            </div>
+
+            <!-- ข่าวสาร -->
+            <div class="menu-card bg-white rounded-lg card-shadow p-6 cursor-pointer fade-in" onclick="showComingSoon('ข่าวสาร')">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-newspaper text-4xl text-indigo-500"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">ข่าวสาร</h3>
+                    <p class="text-gray-600 text-sm">ข่าวสารและประกาศต่างๆ</p>
+                </div>
+            </div>
+
+            <!-- ติดต่อเรา -->
+            <div class="menu-card bg-white rounded-lg card-shadow p-6 cursor-pointer fade-in" onclick="showComingSoon('ติดต่อเรา')">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-phone text-4xl text-red-500"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">ติดต่อเรา</h3>
+                    <p class="text-gray-600 text-sm">ช่องทางการติดต่อ</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="text-center mt-8 text-white opacity-75">
+            <p class="text-sm">
+                <i class="fas fa-info-circle mr-2"></i>
+                หากมีข้อสงสัย กรุณาติดต่อฝ่ายบริหารนิติบุคคล
+            </p>
+            
+            <!-- Debug Button (ซ่อนใน production) -->
+            <div class="mt-4">
+                <button onclick="testConnection()" class="bg-white bg-opacity-20 text-white px-3 py-2 rounded-md hover:bg-opacity-30 text-sm">
+                    <i class="fas fa-wifi mr-1"></i>ทดสอบการเชื่อมต่อ
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Registration Modal -->
+    <div id="registrationModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-semibold text-gray-900">
+                        <i class="fas fa-user-plus mr-2 text-blue-500"></i>ลงทะเบียนสมาชิกใหม่
+                    </h3>
+                    <button onclick="closeRegistrationModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form id="registrationForm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- ชื่อ-สกุล -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-user mr-2 text-blue-500"></i>ชื่อ-สกุล *
+                            </label>
+                            <input type="text" id="memberName" required 
+                                   class="w-full border border-gray-300 rounded-md px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="กรุณากรอกชื่อและนามสกุลของคุณ">
+                            <p class="text-xs text-gray-500 mt-1">ตัวอย่าง: นาย สมชาย ใจดี</p>
+                        </div>
+
+                        <!-- หมายเลขห้อง/บ้าน -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-home mr-2 text-green-500"></i>หมายเลขห้อง/บ้าน
+                            </label>
+                            <input type="text" id="memberUnitNumber" 
+                                   class="w-full border border-gray-300 rounded-md px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="เช่น A-101, B-205">
+                        </div>
+
+                        <!-- เบอร์โทรศัพท์ -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-phone mr-2 text-yellow-500"></i>เบอร์โทรศัพท์
+                            </label>
+                            <input type="tel" id="memberPhone" 
+                                   class="w-full border border-gray-300 rounded-md px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="08X-XXX-XXXX">
+                        </div>
+
+                        <!-- อีเมล -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-envelope mr-2 text-red-500"></i>อีเมล
+                            </label>
+                            <input type="email" id="memberEmail" 
+                                   class="w-full border border-gray-300 rounded-md px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="your.email@example.com">
+                        </div>
+
+                        <!-- ที่อยู่ -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt mr-2 text-purple-500"></i>ที่อยู่ (ถ้ามี)
+                            </label>
+                            <textarea id="memberAddress" rows="3" 
+                                      class="w-full border border-gray-300 rounded-md px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="ที่อยู่สำหรับการติดต่อ (ไม่บังคับ)"></textarea>
+                        </div>
+
+                        <!-- หมายเหตุ -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-sticky-note mr-2 text-orange-500"></i>หมายเหตุเพิ่มเติม
+                            </label>
+                            <textarea id="memberNotes" rows="2" 
+                                      class="w-full border border-gray-300 rounded-md px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="ข้อมูลเพิ่มเติมที่ต้องการแจ้ง (ไม่บังคับ)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- ข้อตกลง -->
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-start">
+                            <input type="checkbox" id="agreeTerms" required class="mt-1 mr-3 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="agreeTerms" class="text-sm text-gray-700">
+                                ฉันยินยอมให้บันทึกและใช้ข้อมูลส่วนตัวของฉันเพื่อการจัดการนิติบุคคล และการติดต่อที่เกี่ยวข้อง
+                                <span class="text-red-500">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ปุ่มส่งข้อมูล -->
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="closeRegistrationModal()" 
+                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" 
+                                class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-md hover:from-blue-700 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            ลงทะเบียนสมาชิก
+                        </button>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <p class="text-sm text-gray-500">
+                            <i class="fas fa-lock mr-1"></i>
+                            ข้อมูลของคุณจะถูกเก็บอย่างปลอดภัยและเป็นความลับ
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coming Soon Modal -->
+    <div id="comingSoonModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center">
+            <div class="mb-4">
+                <i class="fas fa-tools text-4xl text-orange-500"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">กำลังพัฒนา</h3>
+            <p id="featureName" class="text-gray-600 mb-4">ฟีเจอร์นี้กำลังอยู่ในระหว่างการพัฒนา</p>
+            <p class="text-sm text-gray-500 mb-6">เร็วๆ นี้...</p>
+            <button onclick="closeComingSoonModal()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                ตกลง
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let isSubmitting = false;
+
+        document.getElementById('registrationForm').onsubmit = function(e) {
+            e.preventDefault();
+            
+            if (isSubmitting) return;
+            
+            // ตรวจสอบข้อมูลที่จำเป็น
+            const name = document.getElementById('memberName').value.trim();
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+            
+            if (!name) {
+                alert('กรุณากรอกชื่อ-สกุล');
+                document.getElementById('memberName').focus();
+                return;
+            }
+            
+            if (!agreeTerms) {
+                alert('กรุณายินยอมการใช้ข้อมูลส่วนตัว');
+                document.getElementById('agreeTerms').focus();
+                return;
+            }
+            
+            registerMember();
+        };
+
+        function registerMember() {
+            if (isSubmitting) return;
+            isSubmitting = true;
+            
+            const memberData = {
+                name: document.getElementById('memberName').value.trim(),
+                unit_number: document.getElementById('memberUnitNumber').value.trim(),
+                phone: document.getElementById('memberPhone').value.trim(),
+                email: document.getElementById('memberEmail').value.trim(),
+                address: document.getElementById('memberAddress').value.trim(),
+                status: 'Active', // สมาชิกใหม่จะมีสถานะเป็น Active เสมอ
+                notes: document.getElementById('memberNotes').value.trim()
+            };
+            
+            showLoading();
+            
+            // เรียกใช้ wrapper function ที่สร้างขึ้นมาใหม่
+            google.script.run
+                .withSuccessHandler(result => {
+                    isSubmitting = false;
+                    hideLoading();
+                    
+                    try {
+                        let data;
+                        // ตรวจสอบว่า result เป็น string หรือ object
+                        if (typeof result === 'string') {
+                            data = JSON.parse(result);
+                        } else {
+                            data = result;
+                        }
+                        
+                        console.log('Registration result:', data);
+                        
+                        if (data && data.success) {
+                            showSuccessModal(data.member_id);
+                        } else {
+                            handleError(data.error || 'เกิดข้อผิดพลาดในการลงทะเบียน');
+                        }
+                    } catch (error) {
+                        console.error('Parse error:', error, 'Raw result:', result);
+                        handleError('เกิดข้อผิดพลาดในการประมวลผลข้อมูล: ' + error.message);
+                    }
+                })
+                .withFailureHandler(error => {
+                    isSubmitting = false;
+                    hideLoading();
+                    console.error('Google Script error:', error);
+                    let errorMessage = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+                    if (error.message) {
+                        errorMessage += ': ' + error.message;
+                    } else if (typeof error === 'string') {
+                        errorMessage += ': ' + error;
+                    }
+                    handleError(errorMessage);
+                })
+                .handleUserRegistration(memberData);
+        }
+
+        function showLoading() {
+            document.getElementById('loadingScreen').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingScreen').style.display = 'none';
+        }
+
+        function showSuccessModal(memberId) {
+            document.getElementById('memberIdDisplay').textContent = memberId;
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function resetForm() {
+            document.getElementById('successModal').style.display = 'none';
+            document.getElementById('registrationForm').reset();
+            document.getElementById('memberName').focus();
+            
+            // เลื่อนกลับไปด้านบน
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function printInfo() {
+            const memberId = document.getElementById('memberIdDisplay').textContent;
+            const name = document.getElementById('memberName').value;
+            const unitNumber = document.getElementById('memberUnitNumber').value;
+            const phone = document.getElementById('memberPhone').value;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>ใบยืนยันการลงทะเบียน - The House Solution</title>
+                    <style>
+                        body { font-family: 'Sarabun', Arial, sans-serif; padding: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .info { margin: 10px 0; }
+                        .member-id { font-size: 18px; font-weight: bold; color: #2563eb; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>The House Solution</h1>
+                        <h2>ใบยืนยันการลงทะเบียนสมาชิก</h2>
+                    </div>
+                    <div class="info">
+                        <p><strong>รหัสสมาชิก:</strong> <span class="member-id">${memberId}</span></p>
+                        <p><strong>ชื่อ-สกุล:</strong> ${name}</p>
+                        <p><strong>หมายเลขห้อง:</strong> ${unitNumber || '-'}</p>
+                        <p><strong>เบอร์โทร:</strong> ${phone || '-'}</p>
+                        <p><strong>วันที่ลงทะเบียน:</strong> ${new Date().toLocaleDateString('th-TH')}</p>
+                    </div>
+                    <hr>
+                    <p><small>กรุณาเก็บใบยืนยันนี้ไว้สำหรับการติดต่อในอนาคต</small></p>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
+
+        function handleError(message) {
+            console.error('Error:', message);
+            alert('เกิดข้อผิดพลาด: ' + message + '\n\nกรุณาลองใหม่อีกครั้ง หรือติดต่อผู้ดูแลระบบ');
+        }
+
+        // Test connection function
+        function testConnection() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>กำลังทดสอบ...';
+            btn.disabled = true;
+            
+            google.script.run
+                .withSuccessHandler(result => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    
+                    try {
+                        let data;
+                        if (typeof result === 'string') {
+                            data = JSON.parse(result);
+                        } else {
+                            data = result;
+                        }
+                        
+                        if (data.success) {
+                            alert('✅ เชื่อมต่อสำเร็จ!\n\n' +
+                                  'เวลา: ' + new Date(data.timestamp).toLocaleString('th-TH') + '\n' +
+                                  'Sheet: ' + (data.sheetName || 'ไม่ระบุ'));
+                        } else {
+                            alert('❌ เชื่อมต่อไม่สำเร็จ: ' + (data.error || 'ไม่ทราบสาเหตุ'));
+                        }
+                    } catch (error) {
+                        alert('❌ เกิดข้อผิดพลาดในการประมวลผล: ' + error.message);
+                    }
+                })
+                .withFailureHandler(error => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    alert('❌ เชื่อมต่อไม่สำเร็จ: ' + (error.message || error));
+                })
+                .testUserConnection();
+        }
+
+        // Auto focus on name field when page loads
+        window.onload = function() {
+            document.getElementById('memberName').focus();
+        };
+
+        // Format phone number while typing
+        document.getElementById('memberPhone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                if (value.length <= 3) {
+                    value = value;
+                } else if (value.length <= 6) {
+                    value = value.substring(0, 3) + '-' + value.substring(3);
+                } else {
+                    value = value.substring(0, 3) + '-' + value.substring(3, 6) + '-' + value.substring(6, 10);
+                }
+            }
+            e.target.value = value;
+        });
+
+        // Validate email format
+        document.getElementById('memberEmail').addEventListener('blur', function(e) {
+            const email = e.target.value.trim();
+            if (email && !email.includes('@')) {
+                alert('กรุณากรอกอีเมลให้ถูกต้อง เช่น example@gmail.com');
+                e.target.focus();
+            }
+        });
+    </script>
+</body>
+</html>

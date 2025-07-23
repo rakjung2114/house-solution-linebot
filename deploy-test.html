@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Deploy & Test LINE Bot</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }
+        .step { border: 2px solid #ddd; margin: 15px 0; padding: 20px; border-radius: 10px; }
+        .step.active { border-color: #007bff; background-color: #f8f9fa; }
+        .step.success { border-color: #28a745; background-color: #d4edda; }
+        .step.error { border-color: #dc3545; background-color: #f8d7da; }
+        .btn { padding: 12px 25px; margin: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 5px; display: none; }
+        .result.show { display: block; }
+        .code { background-color: #f1f1f1; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
+        .highlight { background-color: yellow; padding: 2px 4px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 LINE Bot Deploy & Test Guide</h1>
+    <p>ทำตามขั้นตอนด้านล่างเพื่อ deploy และทดสอบ LINE Bot</p>
+
+    <!-- Step 1: Deploy Web App -->
+    <div id="step1" class="step active">
+        <h2>1️⃣ Deploy Web App ใหม่</h2>
+        <p><strong>ต้องทำใน Google Apps Script Editor:</strong></p>
+        <ol>
+            <li>เปิด <a href="https://script.google.com" target="_blank">Google Apps Script</a></li>
+            <li>เลือกโปรเจ็กต์ของคุณ</li>
+            <li>คลิก <span class="highlight">Deploy</span> → <span class="highlight">New deployment</span></li>
+            <li>เลือก Type: <span class="highlight">Web app</span></li>
+            <li>ตั้งค่า:</li>
+            <ul>
+                <li>Execute as: <span class="highlight">Me</span></li>
+                <li>Who has access: <span class="highlight">Anyone</span></li>
+            </ul>
+            <li>คลิก <span class="highlight">Deploy</span></li>
+            <li>คัดลอก Web app URL (ลงท้ายด้วย /exec)</li>
+        </ol>
+        <button class="btn btn-primary" onclick="testDeployment()">Test Deployment</button>
+        <div id="step1Result" class="result"></div>
+    </div>
+
+    <!-- Step 2: Test Basic Functions -->
+    <div id="step2" class="step">
+        <h2>2️⃣ ทดสอบฟังก์ชันพื้นฐาน</h2>
+        <p>ทดสอบว่า Web App ทำงานได้ถูกต้อง</p>
+        <button class="btn btn-primary" onclick="testBasicFunctions()">Test Basic Functions</button>
+        <div id="step2Result" class="result"></div>
+    </div>
+
+    <!-- Step 3: Test LINE Bot Token -->
+    <div id="step3" class="step">
+        <h2>3️⃣ ทดสอบ LINE Bot Token</h2>
+        <p>ตรวจสอบว่า LINE Channel Access Token ใช้งานได้</p>
+        <button class="btn btn-primary" onclick="testLineToken()">Test LINE Token</button>
+        <div id="step3Result" class="result"></div>
+    </div>
+
+    <!-- Step 4: Setup Webhook -->
+    <div id="step4" class="step">
+        <h2>4️⃣ ตั้งค่า LINE Bot Webhook</h2>
+        <p><strong>ต้องทำใน LINE Developers Console:</strong></p>
+        <ol>
+            <li>เปิด <a href="https://developers.line.biz/console/" target="_blank">LINE Developers Console</a></li>
+            <li>เลือก Channel ของคุณ</li>
+            <li>ไปที่ <span class="highlight">Messaging API settings</span></li>
+            <li>ในส่วน Webhook settings:</li>
+            <ul>
+                <li>Webhook URL: <input type="text" id="webhookUrl" placeholder="ใส่ Web App URL" style="width: 300px;"></li>
+                <li>Use webhook: <span class="highlight">เปิด (ON)</span></li>
+            </ul>
+            <li>คลิก <span class="highlight">Verify</span> เพื่อทดสอบ</li>
+        </ol>
+        <button class="btn btn-success" onclick="copyUrlToClipboard()">Copy URL to Clipboard</button>
+        <button class="btn btn-primary" onclick="testWebhookSetup()">Test Webhook</button>
+        <div id="step4Result" class="result"></div>
+    </div>
+
+    <!-- Step 5: Test Message -->
+    <div id="step5" class="step">
+        <h2>5️⃣ ทดสอบการส่งข้อความ</h2>
+        <p>จำลองการส่งข้อความจาก LINE</p>
+        <input type="text" id="testMsg" placeholder="ใส่ข้อความทดสอบ (เช่น ทดสอบ, เมนู)" style="width: 300px; padding: 8px;">
+        <button class="btn btn-warning" onclick="simulateLineMessage()">Simulate Message</button>
+        <div id="step5Result" class="result"></div>
+    </div>
+
+    <!-- Final Test -->
+    <div id="finalTest" class="step">
+        <h2>🎯 ทดสอบสุดท้าย</h2>
+        <p>ทดสอบด้วยการส่งข้อความผ่าน LINE Bot จริง</p>
+        <div class="code">
+            ส่งข้อความเหล่านี้ใน LINE Bot:<br>
+            • <strong>ทดสอบ</strong> - ทดสอบการตอบกลับพื้นฐาน<br>
+            • <strong>สวัสดี</strong> - ทดสอบการทักทาย<br>
+            • <strong>เมนู</strong> - ทดสอบเมนูหลัก<br>
+            • <strong>ลงทะเบียน</strong> - ทดสอบการลงทะเบียน
+        </div>
+        <button class="btn btn-success" onclick="runFullTest()">Run Full System Test</button>
+        <div id="finalResult" class="result"></div>
+    </div>
+
+    <script>
+        // ตัวแปรสำหรับเก็บ URL
+        let webappUrl = '';
+
+        // ฟังก์ชันแสดงผลลัพธ์
+        function showResult(elementId, success, message, data = '') {
+            const div = document.getElementById(elementId);
+            div.className = `result show ${success ? 'success' : 'error'}`;
+            div.style.backgroundColor = success ? '#d4edda' : '#f8d7da';
+            div.style.color = success ? '#155724' : '#721c24';
+            div.innerHTML = `
+                <strong>${success ? '✅ สำเร็จ' : '❌ ล้มเหลว'}</strong><br>
+                ${message}
+                ${data ? `<br><small>${data}</small>` : ''}
+            `;
+
+            // อัพเดทสถานะขั้นตอน
+            const step = document.getElementById(elementId.replace('Result', ''));
+            step.className = `step ${success ? 'success' : 'error'}`;
+        }
+
+        // ทดสอบการ deploy
+        async function testDeployment() {
+            try {
+                // ลองใช้ URL ปัจจุบัน
+                webappUrl = window.location.href.split('?')[0];
+                
+                const response = await fetch(webappUrl);
+                const text = await response.text();
+                
+                if (response.ok) {
+                    document.getElementById('webhookUrl').value = webappUrl;
+                    showResult('step1Result', true, 'Web App deployment ทำงานได้!', `Response: ${text}`);
+                } else {
+                    showResult('step1Result', false, 'Web App ไม่ทำงาน', `Status: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('step1Result', false, 'ไม่สามารถเชื่อมต่อ Web App ได้', error.message);
+            }
+        }
+
+        // ทดสอบฟังก์ชันพื้นฐาน
+        async function testBasicFunctions() {
+            try {
+                const response = await fetch(webappUrl + '?action=getWebAppInfo');
+                const result = await response.json();
+                
+                if (result.success) {
+                    webappUrl = result.data.webappUrl;
+                    document.getElementById('webhookUrl').value = webappUrl;
+                    showResult('step2Result', true, 'ฟังก์ชันพื้นฐานทำงานได้!', `Script ID: ${result.data.scriptId}`);
+                } else {
+                    showResult('step2Result', false, 'ฟังก์ชันพื้นฐานมีปัญหา', result.error);
+                }
+            } catch (error) {
+                showResult('step2Result', false, 'ทดสอบฟังก์ชันพื้นฐานล้มเหลว', error.message);
+            }
+        }
+
+        // ทดสอบ LINE Token
+        async function testLineToken() {
+            try {
+                const response = await fetch(webappUrl + '?action=testLineBotConnection');
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('step3Result', true, 'LINE Token ใช้งานได้!', `Bot: ${result.data.displayName} (${result.data.botId})`);
+                } else {
+                    showResult('step3Result', false, 'LINE Token มีปัญหา', result.message);
+                }
+            } catch (error) {
+                showResult('step3Result', false, 'ทดสอบ LINE Token ล้มเหลว', error.message);
+            }
+        }
+
+        // คัดลอก URL
+        function copyUrlToClipboard() {
+            const urlInput = document.getElementById('webhookUrl');
+            urlInput.select();
+            document.execCommand('copy');
+            alert('คัดลอก URL แล้ว! นำไปใส่ใน LINE Developers Console');
+        }
+
+        // ทดสอบ Webhook
+        async function testWebhookSetup() {
+            try {
+                const testEvent = { events: [] }; // Empty events for webhook test
+                
+                const response = await fetch(webappUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testEvent)
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('step4Result', true, 'Webhook setup ถูกต้อง!', `Response: ${result}`);
+                } else {
+                    showResult('step4Result', false, 'Webhook setup มีปัญหา', `Status: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('step4Result', false, 'ทดสอบ Webhook ล้มเหลว', error.message);
+            }
+        }
+
+        // จำลองข้อความ LINE
+        async function simulateLineMessage() {
+            const message = document.getElementById('testMsg').value.trim();
+            if (!message) {
+                alert('กรุณาใส่ข้อความทดสอบ');
+                return;
+            }
+
+            const lineEvent = {
+                events: [{
+                    type: 'message',
+                    message: { type: 'text', text: message },
+                    source: { userId: 'test-user-' + Date.now() },
+                    replyToken: 'test-reply-' + Date.now()
+                }]
+            };
+
+            try {
+                const response = await fetch(webappUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lineEvent)
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('step5Result', true, 'ข้อความถูกประมวลผลแล้ว!', `Response: ${result}`);
+                } else {
+                    showResult('step5Result', false, 'การประมวลผลข้อความล้มเหลว', `Status: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('step5Result', false, 'จำลองข้อความล้มเหลว', error.message);
+            }
+        }
+
+        // ทดสอบระบบทั้งหมด
+        async function runFullTest() {
+            try {
+                const response = await fetch(webappUrl + '?action=testBotSystem');
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('finalResult', true, 'ระบบทำงานครบทุกส่วน!', 
+                        `Token: ${result.data.channelToken ? '✅' : '❌'} | 
+                         Spreadsheet: ${result.data.spreadsheet ? '✅' : '❌'} | 
+                         Menu: ${result.data.flexMenu ? '✅' : '❌'}`);
+                } else {
+                    showResult('finalResult', false, 'ระบบมีปัญหา', result.message);
+                }
+            } catch (error) {
+                showResult('finalResult', false, 'ทดสอบระบบล้มเหลว', error.message);
+            }
+        }
+
+        // Auto-start on page load
+        window.onload = function() {
+            console.log('Deploy & Test page loaded');
+            // testDeployment();
+        };
+    </script>
+</body>
+</html>

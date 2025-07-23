@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 LINE Bot Debug Center</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 12px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn:hover { opacity: 0.8; }
+        .result { margin-top: 15px; padding: 10px; border-radius: 5px; display: none; }
+        .result.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .result.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .result.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .code { background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
+        .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+        .status-ok { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-unknown { background: #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>🤖 LINE Bot Debug Center</h1>
+    <p>เครื่องมือสำหรับ debug และแก้ไขปัญหา LINE Bot</p>
+
+    <!-- System Status -->
+    <div class="card">
+        <h2>📊 System Status</h2>
+        <div id="systemStatus">
+            <p><span class="status-indicator status-unknown"></span>Web App: <span id="webappStatus">Checking...</span></p>
+            <p><span class="status-indicator status-unknown"></span>LINE Token: <span id="tokenStatus">Checking...</span></p>
+            <p><span class="status-indicator status-unknown"></span>Spreadsheet: <span id="sheetStatus">Checking...</span></p>
+        </div>
+        <button class="btn btn-primary" onclick="checkSystemStatus()">🔄 Refresh Status</button>
+    </div>
+
+    <!-- Quick Tests -->
+    <div class="card">
+        <h2>⚡ Quick Tests</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+            <button class="btn btn-success" onclick="testWebApp()">🌐 Test Web App</button>
+            <button class="btn btn-warning" onclick="testLineToken()">🔑 Test LINE Token</button>
+            <button class="btn btn-primary" onclick="testSpreadsheet()">📊 Test Spreadsheet</button>
+            <button class="btn btn-danger" onclick="simulateMessage()">💬 Simulate Message</button>
+        </div>
+        <div id="quickTestResult" class="result"></div>
+    </div>
+
+    <!-- Message Simulator -->
+    <div class="card">
+        <h2>💬 Message Simulator</h2>
+        <p>จำลองการส่งข้อความจาก LINE Bot</p>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="testMessage" placeholder="ใส่ข้อความทดสอบ..." 
+                   style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            <button class="btn btn-primary" onclick="sendTestMessage()">📤 Send</button>
+        </div>
+        <div class="code">
+            💡 ข้อความทดสอบที่แนะนำ:<br>
+            • <strong>test</strong> หรือ <strong>ทดสอบ</strong> - ทดสอบการตอบกลับพื้นฐาน<br>
+            • <strong>ping</strong> - ทดสอบ ping-pong<br>
+            • <strong>debug</strong> - ดูข้อมูล debug<br>
+            • <strong>เมนู</strong> - ทดสอบ Flex Menu<br>
+            • <strong>สวัสดี</strong> - ทดสอบการทักทาย
+        </div>
+        <div id="messageResult" class="result"></div>
+    </div>
+
+    <!-- Deployment Guide -->
+    <div class="card">
+        <h2>🚀 Deployment Checklist</h2>
+        <div id="deploymentChecklist">
+            <label><input type="checkbox" id="check1"> Deploy Web App ใหม่ (New deployment)</label><br>
+            <label><input type="checkbox" id="check2"> ตั้งค่า Execute as: "Me"</label><br>
+            <label><input type="checkbox" id="check3"> ตั้งค่า Who has access: "Anyone"</label><br>
+            <label><input type="checkbox" id="check4"> Copy Web App URL (ลงท้ายด้วย /exec)</label><br>
+            <label><input type="checkbox" id="check5"> ใส่ URL ใน LINE Developers Console</label><br>
+            <label><input type="checkbox" id="check6"> ตั้งค่า Use webhook: ON</label><br>
+            <label><input type="checkbox" id="check7"> Verify webhook ใน LINE Console</label><br>
+        </div>
+        <button class="btn btn-success" onclick="checkDeployment()">✅ Check Deployment</button>
+    </div>
+
+    <!-- Debug Info -->
+    <div class="card">
+        <h2>🔍 Debug Information</h2>
+        <div id="debugInfo" class="code" style="max-height: 300px; overflow-y: auto;">
+            Waiting for debug info...
+        </div>
+        <button class="btn btn-primary" onclick="getDebugInfo()">🔄 Get Debug Info</button>
+        <button class="btn btn-warning" onclick="clearDebugInfo()">🗑️ Clear</button>
+    </div>
+
+    <script>
+        const WEBAPP_URL = window.location.href.split('?')[0];
+
+        function log(message) {
+            const debugDiv = document.getElementById('debugInfo');
+            const timestamp = new Date().toLocaleTimeString();
+            debugDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+        }
+
+        function clearDebugInfo() {
+            document.getElementById('debugInfo').innerHTML = 'Debug info cleared...<br>';
+        }
+
+        function showResult(elementId, type, message) {
+            const div = document.getElementById(elementId);
+            div.className = `result ${type}`;
+            div.style.display = 'block';
+            div.innerHTML = message;
+        }
+
+        function updateStatus(element, status, text) {
+            const indicator = document.querySelector(`#${element}Status`).previousElementSibling;
+            const textElement = document.getElementById(`${element}Status`);
+            
+            indicator.className = `status-indicator status-${status}`;
+            textElement.textContent = text;
+        }
+
+        async function checkSystemStatus() {
+            log('🔄 Checking system status...');
+            
+            // Test Web App
+            try {
+                const response = await fetch(WEBAPP_URL);
+                if (response.ok) {
+                    updateStatus('webapp', 'ok', 'Online');
+                    log('✅ Web App: Online');
+                } else {
+                    updateStatus('webapp', 'error', 'Error');
+                    log('❌ Web App: Error');
+                }
+            } catch (error) {
+                updateStatus('webapp', 'error', 'Offline');
+                log('❌ Web App: Offline');
+            }
+
+            // Test LINE Token
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=testLineBotConnection');
+                const result = await response.json();
+                if (result.success) {
+                    updateStatus('token', 'ok', 'Valid');
+                    log('✅ LINE Token: Valid');
+                } else {
+                    updateStatus('token', 'error', 'Invalid');
+                    log('❌ LINE Token: Invalid');
+                }
+            } catch (error) {
+                updateStatus('token', 'error', 'Error');
+                log('❌ LINE Token: Error');
+            }
+
+            // Test Spreadsheet
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=testUserConnection');
+                const result = await response.json();
+                if (result.success) {
+                    updateStatus('sheet', 'ok', 'Connected');
+                    log('✅ Spreadsheet: Connected');
+                } else {
+                    updateStatus('sheet', 'error', 'Failed');
+                    log('❌ Spreadsheet: Failed');
+                }
+            } catch (error) {
+                updateStatus('sheet', 'error', 'Error');
+                log('❌ Spreadsheet: Error');
+            }
+        }
+
+        async function sendTestMessage() {
+            const message = document.getElementById('testMessage').value.trim();
+            if (!message) {
+                alert('กรุณาใส่ข้อความทดสอบ');
+                return;
+            }
+
+            log(`📤 Sending test message: "${message}"`);
+            
+            const lineEvent = {
+                events: [{
+                    type: 'message',
+                    message: { type: 'text', text: message },
+                    source: { userId: 'debug-user-' + Date.now() },
+                    replyToken: 'debug-reply-' + Date.now()
+                }]
+            };
+
+            try {
+                const response = await fetch(WEBAPP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lineEvent)
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('messageResult', 'success', `✅ Message sent successfully!<br>Response: ${result}`);
+                    log('✅ Message simulation: SUCCESS');
+                } else {
+                    showResult('messageResult', 'error', `❌ Message failed!<br>Status: ${response.status}<br>Response: ${result}`);
+                    log('❌ Message simulation: FAILED');
+                }
+            } catch (error) {
+                showResult('messageResult', 'error', `❌ Error: ${error.message}`);
+                log('❌ Message simulation: ERROR');
+            }
+        }
+
+        async function simulateMessage() {
+            document.getElementById('testMessage').value = 'test';
+            await sendTestMessage();
+        }
+
+        async function testWebApp() {
+            log('🌐 Testing Web App...');
+            try {
+                const response = await fetch(WEBAPP_URL);
+                const text = await response.text();
+                showResult('quickTestResult', 'success', `✅ Web App OK!<br>Response: ${text.substring(0, 100)}...`);
+                log('✅ Web App test: PASSED');
+            } catch (error) {
+                showResult('quickTestResult', 'error', `❌ Web App Error: ${error.message}`);
+                log('❌ Web App test: FAILED');
+            }
+        }
+
+        async function testLineToken() {
+            log('🔑 Testing LINE Token...');
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=testLineBotConnection');
+                const result = await response.json();
+                if (result.success) {
+                    showResult('quickTestResult', 'success', `✅ LINE Token Valid!<br>Bot: ${result.data.displayName}`);
+                    log('✅ LINE Token test: PASSED');
+                } else {
+                    showResult('quickTestResult', 'error', `❌ LINE Token Invalid: ${result.message}`);
+                    log('❌ LINE Token test: FAILED');
+                }
+            } catch (error) {
+                showResult('quickTestResult', 'error', `❌ LINE Token Error: ${error.message}`);
+                log('❌ LINE Token test: ERROR');
+            }
+        }
+
+        async function testSpreadsheet() {
+            log('📊 Testing Spreadsheet...');
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=testUserConnection');
+                const result = await response.json();
+                if (result.success) {
+                    showResult('quickTestResult', 'success', `✅ Spreadsheet Connected!<br>Sheet ID: ${result.sheetName || 'N/A'}`);
+                    log('✅ Spreadsheet test: PASSED');
+                } else {
+                    showResult('quickTestResult', 'error', `❌ Spreadsheet Error: ${result.error}`);
+                    log('❌ Spreadsheet test: FAILED');
+                }
+            } catch (error) {
+                showResult('quickTestResult', 'error', `❌ Spreadsheet Error: ${error.message}`);
+                log('❌ Spreadsheet test: ERROR');
+            }
+        }
+
+        async function checkDeployment() {
+            log('🚀 Checking deployment...');
+            let allChecked = true;
+            for (let i = 1; i <= 7; i++) {
+                if (!document.getElementById(`check${i}`).checked) {
+                    allChecked = false;
+                    break;
+                }
+            }
+            
+            if (allChecked) {
+                showResult('quickTestResult', 'success', '✅ All deployment steps completed!');
+                log('✅ Deployment checklist: COMPLETE');
+            } else {
+                showResult('quickTestResult', 'warning', '⚠️ Please complete all deployment steps');
+                log('⚠️ Deployment checklist: INCOMPLETE');
+            }
+        }
+
+        async function getDebugInfo() {
+            log('🔍 Getting debug information...');
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=getWebAppInfo');
+                const result = await response.json();
+                if (result.success) {
+                    log(`📋 Web App URL: ${result.data.webappUrl}`);
+                    log(`📋 Script ID: ${result.data.scriptId}`);
+                }
+            } catch (error) {
+                log(`❌ Failed to get debug info: ${error.message}`);
+            }
+        }
+
+        // Auto-run status check on page load
+        window.onload = function() {
+            log('🤖 LINE Bot Debug Center loaded');
+            checkSystemStatus();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+// Google Apps Script สำหรับสร้างโครงสร้างฐานข้อมูล The House Solution
+// วิธีใช้: คัดลอกโค้ดนี้ไปวางใน Google Apps Script แล้วรันฟังก์ชัน setupDatabase()
+
+function setupDatabase() {
+  // สร้าง Spreadsheet ใหม่
+  const spreadsheet = SpreadsheetApp.create('The House Solution Database');
+  const spreadsheetId = spreadsheet.getId();
+  
+  // แสดง URL ของ Spreadsheet
+  console.log('Spreadsheet URL: ' + spreadsheet.getUrl());
+  
+  // สร้างแต่ละ Sheet
+  createMembersSheet(spreadsheet);
+  createInvoicesSheet(spreadsheet);
+  createPaymentsSheet(spreadsheet);
+  createMaintenanceSheet(spreadsheet);
+  createEventsSheet(spreadsheet);
+  createEquipmentSheet(spreadsheet);
+  createBookingsSheet(spreadsheet);
+  
+  // ลบ Sheet1 ที่สร้างมาโดยอัตโนมัติ
+  spreadsheet.deleteSheet(spreadsheet.getSheetByName('Sheet1'));
+  
+  return spreadsheetId;
+}
+
+// 1. Members Sheet
+function createMembersSheet(spreadsheet) {
+  const sheet = spreadsheet.insertSheet('Members');
+  const headers = [
+    'member_id', 'line_id', 'first_name', 'last_name', 'unit_number',
+    'phone_number', 'email', 'register_date', 'status', 'profile_picture', 'notes'
+  ];
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground('#4285f4').setFontColor('#ffffff').setFontWeight('bold');
+  
+  // ตัวอย่างข้อมูล
+  const sampleData = [
+    ['M001', 'U123456789', 'สมชาย', 'ใจดี', '101', '0812345678', 'somchai@email.com', new Date(), 'Active', '', 'ลูกบ้านตัวอย่าง']
+  ];
+  sheet.getRange(2, 1, sampleData.length, headers.length).setValues(sampleData);
+  
+  // Auto-resize columns
+  sheet.autoResizeColumns(1, headers.length);
+}
+
+// 2. Invoices Sheet
+function createInvoicesSheet(spreadsheet) {
+  const sheet = spreadsheet.insertSheet('Invoices');
+  const headers = [
+    'invoice_id', 'member_id', 'unit_number', 'issue_date', 'due_date',
+    'total_amount', 'description', 'status', 'payment_id', 'reminder_sent',
+    'created_by', 'created_at'
+  ];
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground('#34a853').setFontColor('#ffffff').setFontWeight('bold');
+  
+  // ตัวอย่างข้อมูล
+  const sampleData = [
+    ['INV001', 'M001', '101', new Date(), new Date(Date.now() + 30*24*60*60*1000), 2500, 'ค่าส่วนกลาง เดือน ก.ค. 2568', 'Pending', '', false, 'Admin', new Date()]
+  ];
+  sheet.getRange(2, 1, sampleData.length, headers.length).setValues(sampleData);
+  
+  sheet.autoResizeColumns(1, headers.length);
+}
+
+// 3. Payments Sheet
+function createPaymentsSheet(spreadsheet) {
+  const sheet = spreadsheet.insertSheet('Payments');
+  const headers = [
+    'payment_id', 'invoice_id', 'member_id', 'payment_date', 'amount',
+    'payment_method', 'transaction_ref', 'receipt_image', 'status', 'notes',
+    'confirmed_by', 'confirmed_at'
+  ];
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground('#fbbc05').setFontColor('#000000').setFontWeight('bold');
+  
+  sheet.autoResizeColumns(1, headers.length);
+}
+
+// 4. Maintenance Sheet
+function createMaintenanceSheet(spreadsheet) {
+  const sheet = spreadsheet.insertSheet('Maintenance');
+  const headers = [
+    'maintenance_id', 'member_id', 'unit_number', 'request_date', 'category',
+    'title', 'description', 'image_urls', 'status', 'assigned_to',
+    'completion_date', 'feedback', 'rating', 'notes', 'updated_at'
+  ];
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground('#ea4335').setFontColor('#ffffff').setFontWeight('bold');
+  
+  // ตัวอย่างข้อมูล
+  const sampleData = [
+    ['MT001', 'M001', '101', new Date(), 'ไฟฟ้า', 'หลอดไฟหน้าบ้านไม่ติด', 'หลอดไฟหน้าบ้านเสีย ต้องการเปลี่ยนใหม่', '', 'Pending', '', '', '', 0, '', new Date()]
+  ];
+  sheet.getRange(2, 1, sampleData.length, headers.length).setValues(sampleData);
+  
+  sheet.autoResizeColumns(1, headers.length);
+}
+
+// 5. Events Sheet
+function createEventsSheet(spreadsheet) {
+  const sheet = spreadsheet.insertSheet('Events');
+  const headers = [
+    'event_id', 'title', 'description', 'start_date', 'start_time',
+    'end_date', 'end_time', 'location', 'max_participants', 'current_participants',
+    'event_image', 'status', 'created_by', 'equipment_locked', 'created_at', 'updated_at'
+  ];
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground('#9333ea').setFontColor('#ffffff').setFontWeight('bold');
+  
+  sheet.autoResizeColumns(1, headers.length);
+}
+
+// 6. Equipment Sheet
+function createEquipmentSheet(spreadsheet) {
+  const sheet = spreadsheet.insertSheet('Equipment');
+  const headers = [
+    'equipment_id', 'name', 'description', 'category', 'total_quantity',
+    'available_quantity', 'image_url', 'status', 'condition', 'location',
+    'acquisition_date', 'notes', 'last_updated'
+  ];
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground('#16a34a').setFontColor('#ffffff').setFontWeight('bold');
+  
+  // ตัวอย่างข้อมูล
+  const sampleData = [
+    ['EQ001', 'เต็นท์ 3x3 เมตร', 'เต็นท์สีขาวสำหรับจัดกิจกรรม', 'อุปกรณ์จัดงาน', 5, 5, '', 'Available', 'Excellent', 'ห้องเก็บของส่วนกลาง', new Date(), '', new Date()],
+    ['EQ002', 'เก้าอี้พลาสติก', 'เก้าอี้พลาสติกสีขาว', 'เฟอร์นิเจอร์', 100, 100, '', 'Available', 'Good', 'ห้องเก็บของส่วนกลาง', new Date(), '', new Date()],
+    ['EQ003', 'โต๊ะพับ', 'โต๊ะพับอเนกประสงค์', 'เฟอร์นิเจอร์', 20, 20, '', 'Available', 'Good', 'ห้องเก็บของส่วนกลาง', new Date(), '', new Date()]
+  ];
+  sheet.getRange(2, 1, sampleData.length, headers.length).setValues(sampleData);
+  
+  sheet.autoResizeColumns(1, headers.length);
+}
+
+// 7. Bookings Sheet
+function createBookingsSheet(spreadsheet) {
+  const sheet = spreadsheet.insertSheet('Bookings');
+  const headers = [
+    'booking_id', 'member_id', 'equipment_ids', 'equipment_names', 'quantities',
+    'booking_date', 'start_date', 'start_time', 'end_date', 'end_time',
+    'purpose', 'status', 'approved_by', 'approved_at', 'actual_return_date',
+    'actual_return_time', 'condition_after_return', 'notes', 'created_at'
+  ];
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground('#dc2626').setFontColor('#ffffff').setFontWeight('bold');
+  
+  sheet.autoResizeColumns(1, headers.length);
+}
+
+// ฟังก์ชันสำหรับ API Endpoints
+function doGet(e) {
+  const action = e.parameter.action;
+  const sheet = e.parameter.sheet;
+  
+  try {
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const targetSheet = spreadsheet.getSheetByName(sheet);
+    
+    if (!targetSheet) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'error',
+        message: 'Sheet not found'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const data = targetSheet.getDataRange().getValues();
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    const result = rows.map(row => {
+      const obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index];
+      });
+      return obj;
+    });
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      data: result
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const action = data.action;
+    const sheet = data.sheet;
+    
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const targetSheet = spreadsheet.getSheetByName(sheet);
+    
+    if (!targetSheet) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'error',
+        message: 'Sheet not found'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    switch (action) {
+      case 'create':
+        return createRecord(targetSheet, data.record);
+      case 'update':
+        return updateRecord(targetSheet, data.id, data.record);
+      case 'delete':
+        return deleteRecord(targetSheet, data.id);
+      default:
+        return ContentService.createTextOutput(JSON.stringify({
+          status: 'error',
+          message: 'Invalid action'
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function createRecord(sheet, record) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const newRow = headers.map(header => record[header] || '');
+  sheet.appendRow(newRow);
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'success',
+    message: 'Record created successfully'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateRecord(sheet, id, record) {
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idColumn = headers.indexOf(headers[0]); // Assume first column is ID
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][idColumn] === id) {
+      headers.forEach((header, index) => {
+        if (record.hasOwnProperty(header)) {
+          sheet.getRange(i + 1, index + 1).setValue(record[header]);
+        }
+      });
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        message: 'Record updated successfully'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'error',
+    message: 'Record not found'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function deleteRecord(sheet, id) {
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idColumn = headers.indexOf(headers[0]); // Assume first column is ID
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][idColumn] === id) {
+      sheet.deleteRow(i + 1);
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        message: 'Record deleted successfully'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'error',
+    message: 'Record not found'
+  })).setMimeType(ContentService.MimeType.JSON);
+}

@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The House Solution - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar-item:hover { background-color: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; }
+        .sidebar-item.active { background-color: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; color: #3b82f6; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .animate-slide-in { animation: slideIn 0.5s ease-out; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center" style="display: none;">
+        <div class="text-center">
+            <div class="loader mx-auto mb-4"></div>
+            <p class="text-gray-600 mb-2">กำลังโหลด...</p>
+            <p class="text-xs text-gray-500">หากใช้เวลานาน กรุณาตรวจสอบการเชื่อมต่อ</p>
+            <button onclick="hideLoading()" class="mt-4 text-blue-600 hover:text-blue-800 text-sm">
+                ยกเลิก
+            </button>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed left-0 top-0 w-64 h-full bg-white shadow-lg z-40 transform -translate-x-full lg:translate-x-0 transition-transform">
+        <div class="p-6 border-b">
+            <h1 class="text-2xl font-bold text-blue-600"><i class="fas fa-home mr-2"></i>The House Solution</h1>
+            <p class="text-sm text-gray-500 mt-1">ระบบบริหารนิติบุคคล</p>
+        </div>
+        <nav class="p-4">
+            <a href="#" onclick="showPage('dashboard')" class="sidebar-item flex items-center p-3 rounded-lg mb-2 cursor-pointer active"><i class="fas fa-chart-line w-6"></i><span class="ml-3">แดชบอร์ด</span></a>
+            <a href="#" onclick="showPage('members')" class="sidebar-item flex items-center p-3 rounded-lg mb-2 cursor-pointer"><i class="fas fa-users w-6"></i><span class="ml-3">จัดการลูกบ้าน</span></a>
+            <a href="#" onclick="showPage('invoices')" class="sidebar-item flex items-center p-3 rounded-lg mb-2 cursor-pointer"><i class="fas fa-file-invoice-dollar w-6"></i><span class="ml-3">ใบแจ้งหนี้</span></a>
+            <a href="#" onclick="showPage('payments')" class="sidebar-item flex items-center p-3 rounded-lg mb-2 cursor-pointer"><i class="fas fa-money-check-alt w-6"></i><span class="ml-3">การชำระเงิน</span></a>
+            <a href="#" onclick="showPage('maintenance')" class="sidebar-item flex items-center p-3 rounded-lg mb-2 cursor-pointer"><i class="fas fa-tools w-6"></i><span class="ml-3">แจ้งซ่อม</span></a>
+            <a href="#" onclick="showPage('equipment')" class="sidebar-item flex items-center p-3 rounded-lg mb-2 cursor-pointer"><i class="fas fa-box w-6"></i><span class="ml-3">ครุภัณฑ์</span></a>
+            <a href="#" onclick="showPage('bookings')" class="sidebar-item flex items-center p-3 rounded-lg mb-2 cursor-pointer"><i class="fas fa-calendar-check w-6"></i><span class="ml-3">การยืม-คืน</span></a>
+            <a href="#" onclick="showPage('events')" class="sidebar-item flex items-center p-3 rounded-lg mb-2 cursor-pointer"><i class="fas fa-calendar-alt w-6"></i><span class="ml-3">กิจกรรม</span></a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-64">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+            <button onclick="toggleSidebar()" class="lg:hidden"><i class="fas fa-bars text-xl"></i></button>
+            <h2 id="pageTitle" class="text-xl font-semibold">แดชบอร์ด</h2>
+            <div class="flex items-center space-x-4">
+                <span id="adminEmailDisplay" class="text-gray-600">สวัสดี, Admin</span>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=3b82f6&color=fff" class="w-10 h-10 rounded-full">
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div id="content" class="p-6">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page animate-slide-in">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">ลูกบ้านทั้งหมด</p>
+                                <p id="totalMembers" class="text-3xl font-bold text-blue-600 mt-2">-</p>
+                            </div>
+                            <div class="bg-blue-100 p-4 rounded-full"><i class="fas fa-users text-blue-600 text-2xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">รายได้เดือนนี้</p>
+                                <p id="monthlyRevenue" class="text-3xl font-bold text-green-600 mt-2">฿-</p>
+                            </div>
+                            <div class="bg-green-100 p-4 rounded-full"><i class="fas fa-dollar-sign text-green-600 text-2xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">งานซ่อมที่รอ</p>
+                                <p id="pendingMaintenance" class="text-3xl font-bold text-orange-600 mt-2">-</p>
+                            </div>
+                            <div class="bg-orange-100 p-4 rounded-full"><i class="fas fa-tools text-orange-600 text-2xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">กิจกรรมที่จะมาถึง</p>
+                                <p id="upcomingEvents" class="text-3xl font-bold text-purple-600 mt-2">-</p>
+                            </div>
+                            <div class="bg-purple-100 p-4 rounded-full"><i class="fas fa-calendar-alt text-purple-600 text-2xl"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6"><h3 class="text-xl font-semibold mb-4">รายรับรายเดือน</h3><canvas id="revenueChart"></canvas></div>
+                    <div class="bg-white rounded-lg shadow p-6"><h3 class="text-xl font-semibold mb-4">สถานะการชำระเงิน</h3><canvas id="paymentChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Members Page -->
+            <div id="members-page" class="page hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">จัดการลูกบ้าน</h3>
+                        <div class="flex space-x-3">
+                            <button onclick="testConnection()" class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 text-sm">
+                                <i class="fas fa-wifi mr-1"></i>ทดสอบการเชื่อมต่อ
+                            </button>
+                            <input type="text" id="memberSearchInput" placeholder="ค้นหาด้วยชื่อ, อีเมล, หมายเลขห้อง..." 
+                                   class="border border-gray-300 rounded-md px-3 py-2 w-64" 
+                                   onkeyup="searchMembers(event)">
+                            <select id="memberStatusFilter" onchange="loadMembers()" class="border border-gray-300 rounded-md px-3 py-2">
+                                <option value="">ทุกสถานะ</option>
+                                <option value="Active">ใช้งาน</option>
+                                <option value="Inactive">ไม่ใช้งาน</option>
+                            </select>
+                            <div class="text-sm text-gray-600 flex items-center bg-blue-50 px-3 py-2 rounded">
+                                <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                                <span>การเพิ่มลูกบ้านใหม่ทำผ่านหน้าบ้านเท่านั้น</span>
+                                <a href="user.html" target="_blank" class="ml-2 text-blue-600 hover:text-blue-800 underline">
+                                    <i class="fas fa-external-link-alt mr-1"></i>เปิดหน้าลงทะเบียน
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสสมาชิก</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-สกุล</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หมายเลขห้อง</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เบอร์โทร</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อีเมล</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่เป็นสมาชิก</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membersTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                        <div class="loader mx-auto mb-2"></div>
+                                        กำลังโหลดข้อมูล...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Page -->
+            <div id="invoices-page" class="page hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">ใบแจ้งหนี้</h3>
+                        <button onclick="showCreateInvoiceModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-plus mr-2"></i>สร้างใบแจ้งหนี้
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เลขที่ใบแจ้งหนี้</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">บ้านเลขที่</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนเงิน</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ครบกำหนด</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoicesTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments Page -->
+            <div id="payments-page" class="page hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold">การชำระเงิน</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสการชำระ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เลขที่ใบแจ้งหนี้</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">บ้านเลขที่</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนเงิน</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่ชำระ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วิธีการชำระ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Page -->
+            <div id="maintenance-page" class="page hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">งานซ่อมบำรุง</h3>
+                        <div class="flex space-x-2">
+                            <select id="maintenanceStatusFilter" onchange="filterMaintenance()" class="border border-gray-300 rounded-md px-3 py-2">
+                                <option value="">ทุกสถานะ</option>
+                                <option value="Pending">รอดำเนินการ</option>
+                                <option value="In Progress">กำลังดำเนินการ</option>
+                                <option value="Completed">เสร็จสิ้น</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสงานซ่อม</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">บ้านเลขที่</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภท</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่แจ้ง</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="maintenanceTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Equipment Page -->
+            <div id="equipment-page" class="page hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">ครุภัณฑ์</h3>
+                        <button onclick="showAddEquipmentModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                            <i class="fas fa-plus mr-2"></i>เพิ่มครุภัณฑ์
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสครุภัณฑ์</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อครุภัณฑ์</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภท</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานที่</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="equipmentTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookings Page -->
+            <div id="bookings-page" class="page hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold">การยืม-คืนครุภัณฑ์</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสการยืม</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ผู้ยืม</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">บ้านเลขที่</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ครุภัณฑ์</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่ยืม</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">กำหนดคืน</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events Page -->
+            <div id="events-page" class="page hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">กิจกรรมนิติบุคคล</h3>
+                        <button onclick="showCreateEventModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                            <i class="fas fa-plus mr-2"></i>สร้างกิจกรรม
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสกิจกรรม</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อกิจกรรม</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่จัด</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานที่</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ผู้เข้าร่วม</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Global Variables ====================
+        let revenueChartInstance = null;
+        let paymentChartInstance = null;
+        let loadingTimeout = null;
+        let isLoading = false;
+
+        // ==================== Initialize ====================
+        window.onload = function() {
+            hideLoading();
+            loadDashboard();
+            // ลบการโหลด email เพื่อลดเวลา
+            document.getElementById('adminEmailDisplay').textContent = 'สวัสดี, Admin';
+        };
+
+        // ==================== Loading Management ====================
+        function showLoading() {
+            if (isLoading) return;
+            isLoading = true;
+            document.getElementById('loadingScreen').style.display = 'flex';
+            
+            // Auto hide loading หลัง 10 วินาที
+            loadingTimeout = setTimeout(() => {
+                hideLoading();
+                handleError('การโหลดใช้เวลานานเกินไป กรุณาลองใหม่');
+            }, 10000);
+        }
+        
+        function hideLoading() {
+            isLoading = false;
+            document.getElementById('loadingScreen').style.display = 'none';
+            if (loadingTimeout) {
+                clearTimeout(loadingTimeout);
+                loadingTimeout = null;
+            }
+        }
+
+        // ==================== Navigation ====================
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            const pageElement = document.getElementById(page + '-page');
+            if (pageElement) {
+                pageElement.classList.remove('hidden');
+                pageElement.classList.add('animate-slide-in');
+            }
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            event.target.closest('.sidebar-item').classList.add('active');
+            const titles = { 'dashboard': 'แดชบอร์ด', 'members': 'จัดการลูกบ้าน', 'invoices': 'ใบแจ้งหนี้', 'payments': 'การชำระเงิน', 'maintenance': 'แจ้งซ่อม', 'equipment': 'ครุภัณฑ์', 'bookings': 'การยืม-คืน', 'events': 'กิจกรรม' };
+            document.getElementById('pageTitle').textContent = titles[page] || page;
+            
+            switch(page) {
+                case 'dashboard': loadDashboard(); break;
+                case 'members': loadMembers(); break;
+                case 'invoices': loadInvoices(); break;
+                case 'payments': loadPayments(); break;
+                case 'maintenance': loadMaintenance(); break;
+                case 'equipment': loadEquipment(); break;
+                case 'bookings': loadBookings(); break;
+                case 'events': loadEvents(); break;
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+
+        // ==================== Dashboard Functions ====================
+        function loadDashboard() {
+            if (isLoading) return;
+            showLoading();
+            
+            // ใช้ Promise เพื่อจัดการ timeout
+            const timeoutPromise = new Promise((resolve, reject) => {
+                setTimeout(() => reject(new Error('Timeout')), 8000);
+            });
+            
+            const dataPromise = new Promise((resolve, reject) => {
+                google.script.run
+                    .withSuccessHandler(resolve)
+                    .withFailureHandler(reject)
+                    .getDashboardData();
+            });
+            
+            Promise.race([dataPromise, timeoutPromise])
+                .then(updateDashboard)
+                .catch(error => {
+                    hideLoading();
+                    if (error.message === 'Timeout') {
+                        handleError('การโหลดข้อมูลใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง');
+                    } else {
+                        handleError(error);
+                    }
+                });
+        }
+
+        function updateDashboard(response) {
+            try {
+                if (response && response.error) {
+                    hideLoading();
+                    return handleError(response.error);
+                }
+                
+                // ตรวจสอบข้อมูล stats
+                if (response && response.stats) {
+                    const stats = response.stats;
+                    document.getElementById('totalMembers').textContent = stats.totalMembers || '0';
+                    document.getElementById('monthlyRevenue').textContent = '฿' + formatNumber(stats.monthlyRevenue || 0);
+                    document.getElementById('pendingMaintenance').textContent = stats.pendingMaintenance || '0';
+                    document.getElementById('upcomingEvents').textContent = stats.upcomingEvents || '0';
+                } else {
+                    // ใส่ข้อมูล default หากไม่มีข้อมูล
+                    document.getElementById('totalMembers').textContent = '0';
+                    document.getElementById('monthlyRevenue').textContent = '฿0.00';
+                    document.getElementById('pendingMaintenance').textContent = '0';
+                    document.getElementById('upcomingEvents').textContent = '0';
+                }
+                
+                // โหลด charts แยกเพื่อไม่ให้ช้า
+                setTimeout(() => {
+                    if (response && response.revenueChart) {
+                        updateRevenueChart(response.revenueChart);
+                    } else {
+                        updateRevenueChart(getDefaultChartData());
+                    }
+                }, 100);
+                
+                setTimeout(() => {
+                    if (response && response.paymentChart) {
+                        updatePaymentChart(response.paymentChart);
+                    } else {
+                        updatePaymentChart(getDefaultPieChartData());
+                    }
+                }, 200);
+                
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                handleError('เกิดข้อผิดพลาดในการแสดงข้อมูล: ' + error.message);
+            }
+        }
+
+        function getDefaultChartData() {
+            return {
+                labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.'],
+                datasets: [{
+                    label: 'รายรับ (บาท)',
+                    data: [0, 0, 0, 0, 0, 0],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }]
+            };
+        }
+
+        function getDefaultPieChartData() {
+            return {
+                labels: ['ไม่มีข้อมูล'],
+                datasets: [{
+                    data: [1],
+                    backgroundColor: ['#e5e7eb'],
+                    borderColor: ['#d1d5db'],
+                    borderWidth: 1
+                }]
+            };
+        }
+
+        function updateRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            if (revenueChartInstance) revenueChartInstance.destroy();
+            revenueChartInstance = new Chart(ctx, { type: 'line', data: data, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+        }
+
+        function updatePaymentChart(data) {
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            if (paymentChartInstance) paymentChartInstance.destroy();
+            paymentChartInstance = new Chart(ctx, { type: 'doughnut', data: data, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+        }
+
+        // ==================== Members Functions ====================
+        function loadMembers() {
+            if (isLoading) return;
+            showLoading();
+            
+            const statusFilter = document.getElementById('memberStatusFilter').value;
+            
+            Promise.race([
+                new Promise((resolve, reject) => {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        .adminDoPost({
+                            action: 'getAllMembers',
+                            status: statusFilter || null
+                        });
+                }),
+                new Promise((resolve, reject) => {
+                    setTimeout(() => reject(new Error('Timeout')), 8000);
+                })
+            ])
+            .then(result => {
+                const data = JSON.parse(result);
+                displayMembers(data);
+            })
+            .catch(error => {
+                hideLoading();
+                if (error.message === 'Timeout') {
+                    handleError('การโหลดข้อมูลสมาชิกใช้เวลานานเกินไป');
+                } else {
+                    handleError('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
+                }
+            });
+        }
+
+        function displayMembers(response) {
+            try {
+                const tbody = document.getElementById('membersTableBody');
+                tbody.innerHTML = '';
+                
+                if (!response.success) {
+                    hideLoading();
+                    return handleError(response.error || 'ไม่สามารถโหลดข้อมูลได้');
+                }
+                
+                const data = response.data;
+                if (!Array.isArray(data) || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-500">ไม่มีข้อมูลสมาชิก</td></tr>';
+                    hideLoading();
+                    return;
+                }
+                
+                data.forEach(member => {
+                    const memberSince = member.member_since ? new Date(member.member_since).toLocaleDateString('th-TH') : '-';
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50';
+                    
+                    // Escape strings เพื่อป้องกัน XSS
+                    const safeName = (member.name || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                    const safeUnit = (member.unit_number || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                    const safePhone = (member.phone || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                    const safeEmail = (member.email || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                    const safeAddress = (member.address || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                    const safeNotes = (member.notes || '').replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${member.member_id || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.name || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.unit_number || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.phone || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.email || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${member.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${member.status === 'Active' ? 'ใช้งาน' : 'ไม่ใช้งาน'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${memberSince}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="showEditMemberModal('${member.member_id}', '${safeName}', '${safeUnit}', '${safePhone}', '${safeEmail}', '${safeAddress}', '${safeNotes}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                <i class="fas fa-edit"></i> แก้ไข
+                            </button>
+                            <select onchange="updateMemberStatus('${member.member_id}', this.value)" class="text-sm border border-gray-300 rounded px-2 py-1">
+                                <option value="Active" ${member.status === 'Active' ? 'selected' : ''}>ใช้งาน</option>
+                                <option value="Inactive" ${member.status === 'Inactive' ? 'selected' : ''}>ไม่ใช้งาน</option>
+                            </select>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                handleError('เกิดข้อผิดพลาดในการแสดงข้อมูลสมาชิก: ' + error.message);
+            }
+        }
+
+        function searchMembers(event) {
+            if (event.key === 'Enter' || event.type === 'input') {
+                const searchTerm = event.target.value.trim();
+                if (searchTerm.length === 0) {
+                    loadMembers();
+                    return;
+                }
+                
+                if (searchTerm.length < 2) return; // ต้องพิมพ์อย่างน้อย 2 ตัวอักษร
+                
+                showLoading();
+                
+                google.script.run
+                    .withSuccessHandler(result => {
+                        const data = JSON.parse(result);
+                        displayMembers(data);
+                    })
+                    .withFailureHandler(error => {
+                        hideLoading();
+                        handleError('เกิดข้อผิดพลาดในการค้นหา: ' + error.message);
+                    })
+                    .adminDoPost({
+                        action: 'searchMembers',
+                        searchTerm: searchTerm
+                    });
+            }
+        }
+
+        function updateMemberStatus(memberId, newStatus) {
+            if (!confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${newStatus === 'Active' ? 'ใช้งาน' : 'ไม่ใช้งาน'}" หรือไม่?`)) {
+                // หากยกเลิก ให้รีโหลดหน้าเพื่อคืนค่าเดิม
+                loadMembers();
+                return;
+            }
+            
+            showLoading();
+            
+            google.script.run
+                .withSuccessHandler(result => {
+                    const data = JSON.parse(result);
+                    hideLoading();
+                    if (data.success) {
+                        alert('อัปเดตสถานะเรียบร้อยแล้ว');
+                        loadMembers(); // รีโหลดข้อมูล
+                    } else {
+                        handleError(data.error);
+                        loadMembers(); // คืนค่าเดิมหากเกิดข้อผิดพลาด
+                    }
+                })
+                .withFailureHandler(error => {
+                    hideLoading();
+                    handleError('เกิดข้อผิดพลาดในการอัปเดตสถานะ: ' + error.message);
+                    loadMembers(); // คืนค่าเดิมหากเกิดข้อผิดพลาด
+                })
+                .adminDoPost({
+                    action: 'updateMember',
+                    memberId: memberId,
+                    updateData: { status: newStatus }
+                });
+        }
+
+        function showEditMemberModal(memberId, name, unitNumber, phone, email, address, notes) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+            modal.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-screen overflow-y-auto">
+                    <h3 class="text-lg font-semibold mb-4">แก้ไขข้อมูลสมาชิก</h3>
+                    <form id="editMemberForm">
+                        <input type="hidden" id="editMemberId" value="${memberId}">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">รหัสสมาชิก</label>
+                            <input type="text" value="${memberId}" disabled class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-สกุล *</label>
+                            <input type="text" id="editMemberName" required value="${name}" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">หมายเลขห้อง</label>
+                            <input type="text" id="editMemberUnitNumber" value="${unitNumber}" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">เบอร์โทร</label>
+                            <input type="tel" id="editMemberPhone" value="${phone}" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">อีเมล</label>
+                            <input type="email" id="editMemberEmail" value="${email}" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ที่อยู่</label>
+                            <textarea id="editMemberAddress" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2">${address}</textarea>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+                            <textarea id="editMemberNotes" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2">${notes}</textarea>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 hover:text-gray-800">ยกเลิก</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">บันทึกการแก้ไข</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            document.getElementById('editMemberForm').onsubmit = function(e) {
+                e.preventDefault();
+                updateMemberInfo();
+            };
+            
+            // Focus on name field
+            document.getElementById('editMemberName').focus();
+        }
+
+        function updateMemberInfo() {
+            const memberId = document.getElementById('editMemberId').value;
+            const updateData = {
+                name: document.getElementById('editMemberName').value.trim(),
+                unit_number: document.getElementById('editMemberUnitNumber').value.trim(),
+                phone: document.getElementById('editMemberPhone').value.trim(),
+                email: document.getElementById('editMemberEmail').value.trim(),
+                address: document.getElementById('editMemberAddress').value.trim(),
+                notes: document.getElementById('editMemberNotes').value.trim()
+            };
+            
+            // ตรวจสอบข้อมูลที่จำเป็น
+            if (!updateData.name) {
+                alert('กรุณากรอกชื่อ-สกุล');
+                document.getElementById('editMemberName').focus();
+                return;
+            }
+            
+            showLoading();
+            
+            google.script.run
+                .withSuccessHandler(result => {
+                    const data = JSON.parse(result);
+                    hideLoading();
+                    if (data.success) {
+                        document.querySelector('.fixed').remove();
+                        alert('แก้ไขข้อมูลเรียบร้อยแล้ว');
+                        loadMembers(); // รีโหลดข้อมูล
+                    } else {
+                        handleError(data.error);
+                    }
+                })
+                .withFailureHandler(error => {
+                    hideLoading();
+                    handleError('เกิดข้อผิดพลาดในการแก้ไขข้อมูล: ' + error.message);
+                })
+                .adminDoPost({
+                    action: 'updateMember',
+                    memberId: memberId,
+                    updateData: updateData
+                });
+        }
+
+        function testConnection() {
+            const originalText = event.target.innerHTML;
+            event.target.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>กำลังทดสอบ...';
+            event.target.disabled = true;
+            
+            google.script.run
+                .withSuccessHandler(result => {
+                    event.target.innerHTML = originalText;
+                    event.target.disabled = false;
+                    
+                    try {
+                        const data = JSON.parse(result);
+                        if (data.success) {
+                            alert('✅ เชื่อมต่อสำเร็จ!\n\nเวลา: ' + new Date(data.timestamp).toLocaleString('th-TH'));
+                        } else {
+                            alert('❌ เชื่อมต่อไม่สำเร็จ: ' + (data.error || 'ไม่ทราบสาเหตุ'));
+                        }
+                    } catch (error) {
+                        alert('❌ เกิดข้อผิดพลาดในการประมวลผล: ' + error.message);
+                    }
+                })
+                .withFailureHandler(error => {
+                    event.target.innerHTML = originalText;
+                    event.target.disabled = false;
+                    alert('❌ เชื่อมต่อไม่สำเร็จ: ' + error.message);
+                })
+                .adminDoPost({
+                    action: 'testConnection'
+                });
+        }
+
+        // ==================== Generic Load Function ====================
+        function loadPageData(sheetName, displayFunction, timeoutMs = 6000) {
+            if (isLoading) return;
+            showLoading();
+            
+            Promise.race([
+                new Promise((resolve, reject) => {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        .getSheetData(sheetName);
+                }),
+                new Promise((resolve, reject) => {
+                    setTimeout(() => reject(new Error('Timeout')), timeoutMs);
+                })
+            ])
+            .then(displayFunction)
+            .catch(error => {
+                hideLoading();
+                if (error.message === 'Timeout') {
+                    handleError(`การโหลดข้อมูล${sheetName}ใช้เวลานานเกินไป กรุณาลองใหม่`);
+                } else {
+                    handleError(error);
+                }
+            });
+        }
+
+        // ==================== Updated Load Functions ====================
+        function loadInvoices() {
+            loadPageData('Invoices', displayInvoices);
+        }
+
+        function loadPayments() {
+            loadPageData('Payments', displayPayments);
+        }
+
+        function loadMaintenance() {
+            loadPageData('Maintenance', displayMaintenance);
+        }
+
+        function loadEquipment() {
+            loadPageData('Equipment', displayEquipment);
+        }
+
+        function loadBookings() {
+            loadPageData('Bookings', displayBookings);
+        }
+
+        function loadEvents() {
+            loadPageData('Events', displayEvents);
+        }
+
+        function displayInvoices(data) {
+            try {
+                const tbody = document.getElementById('invoicesTableBody');
+                tbody.innerHTML = '';
+                
+                if (!data || data.error) {
+                    hideLoading();
+                    return handleError(data ? data.error : 'ไม่สามารถโหลดข้อมูลได้');
+                }
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">ไม่มีใบแจ้งหนี้</td></tr>';
+                    hideLoading();
+                    return;
+                }
+                
+                data.forEach(invoice => {
+                    const statusClass = invoice.status === 'Paid' ? 'bg-green-100 text-green-800' : 
+                                      invoice.status === 'Overdue' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+                    const statusText = invoice.status === 'Paid' ? 'ชำระแล้ว' : 
+                                     invoice.status === 'Overdue' ? 'เกินกำหนด' : 'รอชำระ';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">${invoice.invoice_id || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${invoice.unit_number || '-'}</td>
+                        <td class="px-6 py-4">${invoice.description || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-semibold">฿${formatNumber(invoice.total_amount || 0)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(invoice.due_date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick="editInvoice('${invoice.invoice_id}')" class="text-blue-600 hover:text-blue-900 mr-2">แก้ไข</button>
+                            <button onclick="deleteInvoice('${invoice.invoice_id}')" class="text-red-600 hover:text-red-900">ลบ</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                handleError('เกิดข้อผิดพลาดในการแสดงใบแจ้งหนี้: ' + error.message);
+            }
+        }
+
+        function displayPayments(data) {
+            try {
+                const tbody = document.getElementById('paymentsTableBody');
+                tbody.innerHTML = '';
+                
+                if (!data || data.error) {
+                    hideLoading();
+                    return handleError(data ? data.error : 'ไม่สามารถโหลดข้อมูลได้');
+                }
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">ไม่มีข้อมูลการชำระเงิน</td></tr>';
+                    hideLoading();
+                    return;
+                }
+                
+                data.forEach(payment => {
+                    const statusClass = payment.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                    const statusText = payment.status === 'Confirmed' ? 'ยืนยันแล้ว' : 'รอยืนยัน';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">${payment.payment_id || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">${payment.invoice_id || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${payment.unit_number || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-semibold">฿${formatNumber(payment.amount || 0)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(payment.payment_date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${payment.payment_method || 'ไม่ระบุ'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                handleError('เกิดข้อผิดพลาดในการแสดงข้อมูลการชำระเงิน: ' + error.message);
+            }
+        }
+
+        function displayMaintenance(data) {
+            try {
+                const tbody = document.getElementById('maintenanceTableBody');
+                tbody.innerHTML = '';
+                
+                if (!data || data.error) {
+                    hideLoading();
+                    return handleError(data ? data.error : 'ไม่สามารถโหลดข้อมูลได้');
+                }
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">ไม่มีข้อมูลการซ่อมบำรุง</td></tr>';
+                    hideLoading();
+                    return;
+                }
+                
+                data.forEach(maintenance => {
+                    const statusClass = maintenance.status === 'Completed' ? 'bg-green-100 text-green-800' : 
+                                      maintenance.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800';
+                    const statusText = maintenance.status === 'Completed' ? 'เสร็จสิ้น' : 
+                                     maintenance.status === 'In Progress' ? 'กำลังดำเนินการ' : 'รอดำเนินการ';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">${maintenance.maintenance_id || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${maintenance.unit_number || 'ไม่ระบุ'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${maintenance.category || '-'}</td>
+                        <td class="px-6 py-4">${maintenance.description || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(maintenance.created_date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <select onchange="updateMaintenanceStatus('${maintenance.maintenance_id}', this.value)" class="text-sm border border-gray-300 rounded px-2 py-1">
+                                <option value="Pending" ${maintenance.status === 'Pending' ? 'selected' : ''}>รอดำเนินการ</option>
+                                <option value="In Progress" ${maintenance.status === 'In Progress' ? 'selected' : ''}>กำลังดำเนินการ</option>
+                                <option value="Completed" ${maintenance.status === 'Completed' ? 'selected' : ''}>เสร็จสิ้น</option>
+                            </select>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                handleError('เกิดข้อผิดพลาดในการแสดงข้อมูลการซ่อมบำรุง: ' + error.message);
+            }
+        }
+
+        function filterMaintenance() {
+            const filter = document.getElementById('maintenanceStatusFilter').value;
+            const rows = document.getElementById('maintenanceTableBody').querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const statusCell = row.querySelector('span');
+                const statusText = statusCell ? statusCell.textContent.trim() : '';
+                const showRow = !filter || 
+                    (filter === 'Pending' && statusText === 'รอดำเนินการ') ||
+                    (filter === 'In Progress' && statusText === 'กำลังดำเนินการ') ||
+                    (filter === 'Completed' && statusText === 'เสร็จสิ้น');
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        function updateMaintenanceStatus(maintenanceId, newStatus) {
+            google.script.run
+                .withSuccessHandler(() => {
+                    alert('อัปเดตสถานะเรียบร้อย');
+                    loadMaintenance(); // Reload data
+                })
+                .withFailureHandler(handleError)
+                .updateMaintenanceStatus(maintenanceId, newStatus);
+        }
+
+        // ==================== Equipment Functions ====================
+        function loadEquipment() {
+            document.getElementById('loadingScreen').style.display = 'flex';
+            google.script.run.withSuccessHandler(displayEquipment).withFailureHandler(handleError).getSheetData('Equipment');
+        }
+
+        function displayEquipment(data) {
+            const tbody = document.getElementById('equipmentTableBody');
+            tbody.innerHTML = '';
+            if (data.error) return handleError(data.error);
+            
+            data.forEach(equipment => {
+                const statusClass = equipment.status === 'Available' ? 'bg-green-100 text-green-800' : 
+                                  equipment.status === 'In Use' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800';
+                const statusText = equipment.status === 'Available' ? 'ว่าง' : 
+                                 equipment.status === 'In Use' ? 'กำลังใช้งาน' : 'ไม่พร้อมใช้';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">${equipment.equipment_id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${equipment.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${equipment.category}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">${equipment.location}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="editEquipment('${equipment.equipment_id}')" class="text-blue-600 hover:text-blue-900 mr-2">แก้ไข</button>
+                        <button onclick="deleteEquipment('${equipment.equipment_id}')" class="text-red-600 hover:text-red-900">ลบ</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            document.getElementById('loadingScreen').style.display = 'none';
+        }
+
+        // ==================== Bookings Functions ====================
+        function loadBookings() {
+            document.getElementById('loadingScreen').style.display = 'flex';
+            google.script.run.withSuccessHandler(displayBookings).withFailureHandler(handleError).getSheetData('Bookings');
+        }
+
+        function displayBookings(data) {
+            const tbody = document.getElementById('bookingsTableBody');
+            tbody.innerHTML = '';
+            if (data.error) return handleError(data.error);
+            
+            data.forEach(booking => {
+                const statusClass = booking.status === 'Returned' ? 'bg-green-100 text-green-800' : 
+                                  booking.status === 'Active' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800';
+                const statusText = booking.status === 'Returned' ? 'คืนแล้ว' : 
+                                 booking.status === 'Active' ? 'กำลังยืม' : 'เกินกำหนด';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">${booking.booking_id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.borrower_name || 'ไม่ระบุ'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.unit_number || 'ไม่ระบุ'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.equipment_name || 'ไม่ระบุ'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.borrow_date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.due_date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${booking.status !== 'Returned' ? 
+                            `<button onclick="markAsReturned('${booking.booking_id}')" class="text-green-600 hover:text-green-900">บันทึกคืน</button>` : 
+                            '<span class="text-gray-500">คืนแล้ว</span>'
+                        }
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            document.getElementById('loadingScreen').style.display = 'none';
+        }
+
+        function markAsReturned(bookingId) {
+            if (confirm('ยืนยันการคืนครุภัณฑ์?')) {
+                google.script.run
+                    .withSuccessHandler(() => {
+                        alert('บันทึกการคืนเรียบร้อย');
+                        loadBookings();
+                    })
+                    .withFailureHandler(handleError)
+                    .markBookingAsReturned(bookingId);
+            }
+        }
+
+        // ==================== Events Functions ====================
+        function loadEvents() {
+            document.getElementById('loadingScreen').style.display = 'flex';
+            google.script.run.withSuccessHandler(displayEvents).withFailureHandler(handleError).getSheetData('Events');
+        }
+
+        function displayEvents(data) {
+            const tbody = document.getElementById('eventsTableBody');
+            tbody.innerHTML = '';
+            if (data.error) return handleError(data.error);
+            
+            data.forEach(event => {
+                const statusClass = event.status === 'Completed' ? 'bg-gray-100 text-gray-800' : 
+                                  event.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                const statusText = event.status === 'Completed' ? 'เสร็จสิ้น' : 
+                                 event.status === 'Active' ? 'เปิดรับสมัคร' : 'กำลังจัด';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap font-mono text-sm">${event.event_id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${event.title}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(event.event_date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${event.location}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${event.participants || 0} คน</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="editEvent('${event.event_id}')" class="text-blue-600 hover:text-blue-900 mr-2">แก้ไข</button>
+                        <button onclick="deleteEvent('${event.event_id}')" class="text-red-600 hover:text-red-900">ลบ</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            document.getElementById('loadingScreen').style.display = 'none';
+        }
+
+        // ==================== Utility Functions ====================
+        function formatNumber(num) { return (num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('th-TH');
+        }
+        
+        function handleError(error) {
+            console.error('Error:', error);
+            
+            // แสดงข้อความ error ที่เข้าใจง่าย
+            let message = 'เกิดข้อผิดพลาด';
+            if (typeof error === 'string') {
+                message = error;
+            } else if (error && error.message) {
+                message = error.message;
+            }
+            
+            // แสดง alert แต่ไม่รบกวนมาก
+            if (message.includes('Timeout') || message.includes('ใช้เวลานาน')) {
+                console.warn('Timeout error:', message);
+                // อาจจะไม่แสดง alert สำหรับ timeout เพื่อไม่ให้รบกวน
+            } else {
+                setTimeout(() => alert(message), 100);
+            }
+            
+            hideLoading();
+        }
+
+        // เพิ่ม debounce เพื่อป้องกันการคลิกซ้ำ
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // ใช้ debounce กับฟังก์ชัน showPage
+        const debouncedShowPage = debounce((page) => {
+            if (isLoading) return;
+            
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            const pageElement = document.getElementById(page + '-page');
+            if (pageElement) {
+                pageElement.classList.remove('hidden');
+                pageElement.classList.add('animate-slide-in');
+            }
+            
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            event?.target?.closest('.sidebar-item')?.classList.add('active');
+            
+            const titles = { 'dashboard': 'แดชบอร์ด', 'members': 'จัดการลูกบ้าน', 'invoices': 'ใบแจ้งหนี้', 'payments': 'การชำระเงิน', 'maintenance': 'แจ้งซ่อม', 'equipment': 'ครุภัณฑ์', 'bookings': 'การยืม-คืน', 'events': 'กิจกรรม' };
+            document.getElementById('pageTitle').textContent = titles[page] || page;
+            
+            switch(page) {
+                case 'dashboard': loadDashboard(); break;
+                case 'members': loadMembers(); break;
+                case 'invoices': loadInvoices(); break;
+                case 'payments': loadPayments(); break;
+                case 'maintenance': loadMaintenance(); break;
+                case 'equipment': loadEquipment(); break;
+                case 'bookings': loadBookings(); break;
+                case 'events': loadEvents(); break;
+            }
+        }, 300);
+        
+        // อัปเดตฟังก์ชัน showPage เดิม
+        function showPage(page) {
+            debouncedShowPage(page);
+        }
+
+        // ==================== Modal Functions (Placeholder) ====================
+        function showCreateInvoiceModal() { alert('ฟังก์ชันสร้างใบแจ้งหนี้อยู่ระหว่างการพัฒนา'); }
+        function showAddEquipmentModal() { alert('ฟังก์ชันเพิ่มครุภัณฑ์อยู่ระหว่างการพัฒนา'); }
+        function showCreateEventModal() { alert('ฟังก์ชันสร้างกิจกรรมอยู่ระหว่างการพัฒนา'); }
+        function editInvoice(id) { alert('ฟังก์ชันแก้ไขใบแจ้งหนี้อยู่ระหว่างการพัฒนา: ' + id); }
+        function deleteInvoice(id) { if(confirm('ยืนยันการลบ?')) alert('ฟังก์ชันลบใบแจ้งหนี้อยู่ระหว่างการพัฒนา: ' + id); }
+        function editEquipment(id) { alert('ฟังก์ชันแก้ไขครุภัณฑ์อยู่ระหว่างการพัฒนา: ' + id); }
+        function deleteEquipment(id) { if(confirm('ยืนยันการลบ?')) alert('ฟังก์ชันลบครุภัณฑ์อยู่ระหว่างการพัฒนา: ' + id); }
+        function editEvent(id) { alert('ฟังก์ชันแก้ไขกิจกรรมอยู่ระหว่างการพัฒนา: ' + id); }
+        function deleteEvent(id) { if(confirm('ยืนยันการลบ?')) alert('ฟังก์ชันลบกิจกรรมอยู่ระหว่างการพัฒนา: ' + id); }
+    </script>
+</body>
+</html>

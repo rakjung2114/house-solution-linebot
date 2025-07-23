@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทดสอบ LINE Bot Connection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold text-center mb-6 text-green-600">
+            <i class="fab fa-line mr-2"></i>ทดสอบการเชื่อมต่อ LINE Bot
+        </h1>
+        
+        <div class="space-y-4">
+            <!-- แสดงข้อมูล Web App URL -->
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-blue-700 mb-2">
+                    <i class="fas fa-info-circle mr-2"></i>ข้อมูล Web App URL
+                </h3>
+                <p class="text-sm text-gray-600 mb-2">คัดลอก URL นี้ไปตั้งค่าใน LINE Bot Console:</p>
+                <input type="text" id="webappUrl" readonly 
+                       class="w-full p-2 border rounded bg-gray-100 text-sm select-all">
+                <button onclick="copyUrl()" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                    <i class="fas fa-copy mr-1"></i>คัดลอก URL
+                </button>
+            </div>
+
+            <!-- ทดสอบ GET Request -->
+            <div class="bg-green-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-green-700 mb-2">
+                    <i class="fas fa-check-circle mr-2"></i>ทดสอบ GET Request (Webhook Verification)
+                </h3>
+                <button onclick="testGetRequest()" 
+                        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+                    <i class="fas fa-play mr-1"></i>ทดสอบ GET
+                </button>
+                <div id="getResult" class="mt-2 p-2 rounded hidden"></div>
+            </div>
+
+            <!-- ทดสอบ POST Request -->
+            <div class="bg-yellow-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-yellow-700 mb-2">
+                    <i class="fas fa-paper-plane mr-2"></i>ทดสอบ POST Request (Webhook Event)
+                </h3>
+                <button onclick="testPostRequest()" 
+                        class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
+                    <i class="fas fa-play mr-1"></i>ทดสอบ POST
+                </button>
+                <div id="postResult" class="mt-2 p-2 rounded hidden"></div>
+            </div>
+
+            <!-- ทดสอบ LINE Bot API -->
+            <div class="bg-purple-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-purple-700 mb-2">
+                    <i class="fab fa-line mr-2"></i>ทดสอบ LINE Bot API Connection
+                </h3>
+                <button onclick="testLineBotAPI()" 
+                        class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition">
+                    <i class="fas fa-play mr-1"></i>ทดสอบ LINE Bot
+                </button>
+                <div id="lineBotResult" class="mt-2 p-2 rounded hidden"></div>
+            </div>
+
+            <!-- รีเซ็ต Webhook -->
+            <div class="bg-orange-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-orange-700 mb-2">
+                    <i class="fas fa-sync-alt mr-2"></i>รีเซ็ต LINE Bot Webhook
+                </h3>
+                <button onclick="resetWebhook()" 
+                        class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
+                    <i class="fas fa-sync-alt mr-1"></i>รีเซ็ต Webhook
+                </button>
+                <div id="webhookResult" class="mt-2 p-2 rounded hidden"></div>
+            </div>
+
+            <!-- แสดงผลการทดสอบ -->
+            <div id="testResults" class="space-y-2 hidden">
+                <h3 class="font-semibold text-gray-700">
+                    <i class="fas fa-clipboard-list mr-2"></i>ผลการทดสอบ
+                </h3>
+            </div>
+
+            <!-- คำแนะนำการแก้ไข -->
+            <div class="bg-red-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-red-700 mb-2">
+                    <i class="fas fa-tools mr-2"></i>วิธีแก้ปัญหา Timeout
+                </h3>
+                <ul class="text-sm text-gray-700 space-y-1">
+                    <li>1. ตรวจสอบว่า Web App ได้ deploy แล้วเป็น "New deployment"</li>
+                    <li>2. ตั้งค่า Execute as: "Me" และ Who has access: "Anyone"</li>
+                    <li>3. ใส่ URL ที่ได้จากการ deploy ไปใน LINE Bot Console</li>
+                    <li>4. URL ต้องลงท้ายด้วย /exec แทน /dev</li>
+                    <li>5. รอสักครู่หลัง deploy ใหม่ก่อนทดสอบ</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ตั้งค่า URL ของ Web App - ต้องแก้ไขให้ตรงกับ URL จริงของคุณ
+        let WEBAPP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+        
+        window.onload = function() {
+            // ลองดึง URL จริงจาก API
+            getActualWebAppUrl();
+        };
+
+        async function getActualWebAppUrl() {
+            try {
+                // ลองเรียก function getWebAppInfo
+                const response = await fetch(WEBAPP_URL + '?action=getWebAppInfo');
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        WEBAPP_URL = result.data.webappUrl;
+                        document.getElementById('webappUrl').value = WEBAPP_URL;
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Cannot get actual URL, using default');
+            }
+            
+            // ถ้าดึงไม่ได้ ให้ใช้ URL เริ่มต้น
+            document.getElementById('webappUrl').value = WEBAPP_URL;
+        }
+
+        function copyUrl() {
+            const urlInput = document.getElementById('webappUrl');
+            urlInput.select();
+            document.execCommand('copy');
+            alert('คัดลอก URL แล้ว!');
+        }
+
+        async function testGetRequest() {
+            const resultDiv = document.getElementById('getResult');
+            resultDiv.className = 'mt-2 p-2 rounded';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังทดสอบ GET...';
+            
+            try {
+                const response = await fetch(WEBAPP_URL);
+                const text = await response.text();
+                
+                if (response.ok) {
+                    resultDiv.className = 'mt-2 p-2 rounded bg-green-100 text-green-800';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-check-circle mr-2"></i>GET ทำงานได้!<br>
+                        <small>Response: ${text}</small>
+                    `;
+                } else {
+                    resultDiv.className = 'mt-2 p-2 rounded bg-red-100 text-red-800';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-times-circle mr-2"></i>GET Error: ${response.status}<br>
+                        <small>${text}</small>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'mt-2 p-2 rounded bg-red-100 text-red-800';
+                resultDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Error: ${error.message}
+                `;
+            }
+        }
+
+        async function testPostRequest() {
+            const resultDiv = document.getElementById('postResult');
+            resultDiv.className = 'mt-2 p-2 rounded';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังทดสอบ POST...';
+            
+            // จำลอง webhook event จาก LINE
+            const testEvent = {
+                events: [{
+                    type: 'message',
+                    message: {
+                        type: 'text',
+                        text: 'test'
+                    },
+                    source: {
+                        userId: 'test-user-id'
+                    },
+                    replyToken: 'test-reply-token'
+                }]
+            };
+            
+            try {
+                const response = await fetch(WEBAPP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testEvent)
+                });
+                
+                const text = await response.text();
+                
+                if (response.ok) {
+                    resultDiv.className = 'mt-2 p-2 rounded bg-green-100 text-green-800';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-check-circle mr-2"></i>POST ทำงานได้!<br>
+                        <small>Response: ${text}</small>
+                    `;
+                } else {
+                    resultDiv.className = 'mt-2 p-2 rounded bg-red-100 text-red-800';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-times-circle mr-2"></i>POST Error: ${response.status}<br>
+                        <small>${text}</small>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'mt-2 p-2 rounded bg-red-100 text-red-800';
+                resultDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Error: ${error.message}
+                `;
+            }
+        }
+
+        async function testLineBotAPI() {
+            const resultDiv = document.getElementById('lineBotResult');
+            resultDiv.className = 'mt-2 p-2 rounded';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังทดสอบ LINE Bot API...';
+            
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=testLineBotConnection');
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.className = 'mt-2 p-2 rounded bg-green-100 text-green-800';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-check-circle mr-2"></i>${result.message}<br>
+                        <small>Bot ID: ${result.data.botId}</small><br>
+                        <small>Display Name: ${result.data.displayName}</small>
+                    `;
+                } else {
+                    resultDiv.className = 'mt-2 p-2 rounded bg-red-100 text-red-800';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-times-circle mr-2"></i>${result.message}<br>
+                        <small>Error: ${result.error}</small>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'mt-2 p-2 rounded bg-red-100 text-red-800';
+                resultDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Error: ${error.message}
+                `;
+            }
+        }
+
+        async function resetWebhook() {
+            const resultDiv = document.getElementById('webhookResult');
+            resultDiv.className = 'mt-2 p-2 rounded';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังรีเซ็ต Webhook...';
+            
+            try {
+                const response = await fetch(WEBAPP_URL + '?action=resetLineBotWebhook');
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.className = 'mt-2 p-2 rounded bg-green-100 text-green-800';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-check-circle mr-2"></i>${result.message}<br>
+                        <small>Webhook URL: ${result.data.webhookUrl}</small>
+                    `;
+                } else {
+                    resultDiv.className = 'mt-2 p-2 rounded bg-red-100 text-red-800';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-times-circle mr-2"></i>${result.message}<br>
+                        <small>Error: ${result.error}</small>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'mt-2 p-2 rounded bg-red-100 text-red-800';
+                resultDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Error: ${error.message}
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

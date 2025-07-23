@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The House Solution - ระบบบริหารนิติบุคคล</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 0;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .service-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">🏠 The House Solution</h1>
+                    <p class="text-blue-100 mt-1">ระบบบริหารนิติบุคคลอัจฉริยะ</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="openRegistrationModal()" 
+                            class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
+                        <i class="fas fa-user-plus mr-2"></i>ลงทะเบียนสมาชิก
+                    </button>
+                    <a href="?page=admin" 
+                       class="bg-blue-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition">
+                        <i class="fas fa-cog mr-2"></i>แอดมิน
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">ยินดีต้อนรับสู่ระบบบริหารนิติบุคคลยุคใหม่</h2>
+            <p class="text-xl text-gray-600 mb-8">จัดการทุกเรื่องของคอนโดมิเนียมอย่างมีประสิทธิภาพด้วยเทคโนโลยี</p>
+            <div class="flex justify-center space-x-4">
+                <button onclick="openRegistrationModal()" 
+                        class="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition">
+                    เริ่มใช้งานเลย
+                </button>
+                <button onclick="scrollToServices()" 
+                        class="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-50 transition">
+                    ดูบริการ
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">บริการของเรา</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Service 1: Member Management -->
+                <div class="service-card bg-white rounded-lg p-6 shadow-md">
+                    <div class="text-blue-600 text-4xl mb-4">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">บริหารสมาชิก</h3>
+                    <p class="text-gray-600">จัดการข้อมูลสมาชิก การลงทะเบียน และการติดต่อสื่อสารอย่างมีประสิทธิภาพ</p>
+                </div>
+
+                <!-- Service 2: Billing System -->
+                <div class="service-card bg-white rounded-lg p-6 shadow-md">
+                    <div class="text-green-600 text-4xl mb-4">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">ระบบเรียกเก็บเงิน</h3>
+                    <p class="text-gray-600">สร้างใบแจ้งหนี้ ติดตามการชำระเงิน และจัดการการเงินแบบอัตโนมัติ</p>
+                </div>
+
+                <!-- Service 3: Maintenance -->
+                <div class="service-card bg-white rounded-lg p-6 shadow-md">
+                    <div class="text-orange-600 text-4xl mb-4">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">แจ้งซ่อมออนไลน์</h3>
+                    <p class="text-gray-600">แจ้งปัญหาการซ่อมแซม ติดตามสถานะ และจัดการงานซ่อมบำรุง</p>
+                </div>
+
+                <!-- Service 4: LINE Bot -->
+                <div class="service-card bg-white rounded-lg p-6 shadow-md">
+                    <div class="text-green-500 text-4xl mb-4">
+                        <i class="fab fa-line"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">LINE Bot Service</h3>
+                    <p class="text-gray-600">บริการผ่าน LINE Bot สำหรับการติดต่อและใช้งานแบบรวดเร็ว</p>
+                </div>
+
+                <!-- Service 5: Equipment -->
+                <div class="service-card bg-white rounded-lg p-6 shadow-md">
+                    <div class="text-purple-600 text-4xl mb-4">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">ยืม-คืนครุภัณฑ์</h3>
+                    <p class="text-gray-600">จัดการการยืม-คืนครุภัณฑ์สาธารณะในอาคาร</p>
+                </div>
+
+                <!-- Service 6: Events -->
+                <div class="service-card bg-white rounded-lg p-6 shadow-md">
+                    <div class="text-red-600 text-4xl mb-4">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">จัดการกิจกรรม</h3>
+                    <p class="text-gray-600">ประชาสัมพันธ์และจัดการกิจกรรมของนิติบุคคล</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8">ติดต่อเรา</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <i class="fas fa-map-marker-alt text-blue-600 text-3xl mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">ที่อยู่</h3>
+                    <p class="text-gray-600">อาคารสโมสร ชั้น 1<br>The House Condominium</p>
+                </div>
+                <div>
+                    <i class="fas fa-phone text-blue-600 text-3xl mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">โทรศัพท์</h3>
+                    <p class="text-gray-600">02-XXX-XXXX</p>
+                </div>
+                <div>
+                    <i class="fas fa-envelope text-blue-600 text-3xl mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">อีเมล</h3>
+                    <p class="text-gray-600">info@thehousesolution.com</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Registration Modal -->
+    <div id="registrationModal" class="modal">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="gradient-bg text-white p-6 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold">
+                        <i class="fas fa-user-plus mr-2"></i>ลงทะเบียนสมาชิกใหม่
+                    </h3>
+                    <button onclick="closeRegistrationModal()" class="text-white hover:text-gray-200">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <form id="registrationForm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-user mr-1"></i>ชื่อ-นามสกุล *
+                            </label>
+                            <input type="text" id="fullName" name="fullName" required
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="ระบุชื่อ-นามสกุล">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-home mr-1"></i>เลขที่บ้าน/ห้อง *
+                            </label>
+                            <input type="text" id="unitNumber" name="unitNumber" required
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="เช่น A-101, B-205">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-phone mr-1"></i>เบอร์โทรศัพท์ *
+                            </label>
+                            <input type="tel" id="phoneNumber" name="phoneNumber" required
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="08x-xxx-xxxx">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-envelope mr-1"></i>อีเมล *
+                            </label>
+                            <input type="email" id="email" name="email" required
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="example@email.com">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex space-x-4">
+                        <button type="button" onclick="testConnection()" 
+                                class="flex-1 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition">
+                            <i class="fas fa-plug mr-2"></i>ทดสอบการเชื่อมต่อ
+                        </button>
+                        <button type="submit" 
+                                class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                            <i class="fas fa-save mr-2"></i>ลงทะเบียน
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Result Display -->
+                <div id="registrationResult" class="mt-4 p-3 rounded-lg hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <h3 class="text-xl font-bold mb-2">🏠 The House Solution</h3>
+            <p class="text-blue-100">ระบบบริหารนิติบุคคลอัจฉริยะ</p>
+            <p class="text-blue-200 text-sm mt-4">&copy; 2025 The House Solution. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Modal functions
+        function openRegistrationModal() {
+            document.getElementById('registrationModal').classList.add('show');
+        }
+
+        function closeRegistrationModal() {
+            document.getElementById('registrationModal').classList.remove('show');
+            clearForm();
+        }
+
+        function scrollToServices() {
+            document.getElementById('services').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('registrationModal');
+            if (event.target === modal) {
+                closeRegistrationModal();
+            }
+        }
+
+        // Form functions
+        function clearForm() {
+            document.getElementById('registrationForm').reset();
+            hideResult();
+        }
+
+        function showResult(message, isSuccess = true) {
+            const resultDiv = document.getElementById('registrationResult');
+            resultDiv.className = `mt-4 p-3 rounded-lg ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            resultDiv.innerHTML = `
+                <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'} mr-2"></i>
+                ${message}
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        function hideResult() {
+            document.getElementById('registrationResult').classList.add('hidden');
+        }
+
+        // Test connection function
+        async function testConnection() {
+            showResult('<i class="fas fa-spinner fa-spin mr-2"></i>กำลังทดสอบการเชื่อมต่อ...', true);
+            
+            try {
+                const response = await fetch(window.location.href + '?action=testUserConnection');
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('✅ การเชื่อมต่อสำเร็จ! ระบบพร้อมใช้งาน', true);
+                } else {
+                    showResult('❌ การเชื่อมต่อล้มเหลว: ' + result.error, false);
+                }
+            } catch (error) {
+                showResult('❌ เกิดข้อผิดพลาด: ' + error.message, false);
+            }
+        }
+
+        // Registration form submission
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                action: 'handleUserRegistration',
+                fullName: document.getElementById('fullName').value,
+                unitNumber: document.getElementById('unitNumber').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                email: document.getElementById('email').value
+            };
+            
+            showResult('<i class="fas fa-spinner fa-spin mr-2"></i>กำลังลงทะเบียน...', true);
+            
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('✅ ลงทะเบียนสำเร็จ! ยินดีต้อนรับเข้าสู่ระบบ', true);
+                    setTimeout(() => {
+                        closeRegistrationModal();
+                    }, 2000);
+                } else {
+                    showResult('❌ ลงทะเบียนล้มเหลว: ' + result.error, false);
+                }
+            } catch (error) {
+                showResult('❌ เกิดข้อผิดพลาด: ' + error.message, false);
+            }
+        });
+    </script>
+</body>
+</html>
