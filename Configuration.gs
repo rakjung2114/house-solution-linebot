@@ -1,12 +1,12 @@
 /const CONFIG = {
   // Google Sheets - ใส่ Spreadsheet ID ที่ถูกต้องของคุณ
-  SPREADSHEET_ID: '1uQIDSvNgf4C89tXNQCza7EpytrhN-tjDU2snA_w8z4w', // Admin API Spreadsheet ID
-  LINE_SPREADSHEET_ID: '1uQIDSvNgf4C89tXNQCza7EpytrhN-tjDU2snA_w8z4w', // LINE Bot Spreadsheet ID
+  SPREADSHEET_ID: '', // Admin API Spreadsheet ID
+  LINE_SPREADSHEET_ID: '', // LINE Bot Spreadsheet ID
   
   // LINE Bot Configuration
-  LINE_CHANNEL_ACCESS_TOKEN: 'fyqY671pI+IhINBcBTX1EcoLRaKRv7zQJx1r5MZqQhTl33GgHQOm8kJRuod+u2YHSbLO4xcWMgTDNJ5f0XN1IWkeMY3d88+eMlwTyiL1c/z/XYNgS4y771FGpsQp1bIc57nGwNoVpsicOzwjc18sMAdB04t89/1O/w1cDnyilFU=',
-  CHANNEL_ACCESS_TOKEN: 'fyqY671pI+IhINBcBTX1EcoLRaKRv7zQJx1r5MZqQhTl33GgHQOm8kJRuod+u2YHSbLO4xcWMgTDNJ5f0XN1IWkeMY3d88+eMlwTyiL1c/z/XYNgS4y771FGpsQp1bIc57nGwNoVpsicOzwjc18sMAdB04t89/1O/w1cDnyilFU=',
-  MAINTENANCE_PHOTOS_FOLDER_ID: '1diMXhVGT5gzGYrn4rYrjvlWF_xjbF_tr',
+  LINE_CHANNEL_ACCESS_TOKEN: '',
+  CHANNEL_ACCESS_TOKEN: '',
+  MAINTENANCE_PHOTOS_FOLDER_ID: '',
   LINE_REPLY_URL: 'https://api.line.me/v2/bot/message/reply',
   LINE_PUSH_URL: 'https://api.line.me/v2/bot/message/push'
 };=========== Shared Configuration ====================
